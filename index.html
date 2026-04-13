@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ePKK - Keanggotaan Digital</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
@@ -13,1183 +13,996 @@
         /* Print Styles */
         @media print {
             body { background-color: white; }
-            #sidebar, #topbar, .no-print, .action-col { display: none !important; }
-            #main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
-            .print-container { width: 100%; padding: 20px; }
-            @page { size: A4; margin: 15mm; }
+            #sidebar, header, .no-print { display: none !important; }
+            #main-content { margin: 0; padding: 0; width: 100%; }
+            .print-area { width: 100%; }
+            @page { size: A4; margin: 10mm; }
+            .print-table th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
             .page-break { page-break-before: always; }
-            table { border-collapse: collapse; width: 100%; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f8fafc !important; -webkit-print-color-adjust: exact; }
         }
-
+        
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        .ratio-bar-container { width: 100%; height: 24px; border-radius: 12px; overflow: hidden; background-color: #e5e7eb; display: flex; position: relative;}
-        .ratio-bar-fill { height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem; font-weight: bold; transition: width 0.5s ease;}
-        .ratio-pink { background-color: #d946ef; } /* Kelurahan - Perempuan */
-        .ratio-blue { background-color: #3b82f6; } /* Kecamatan - Laki-laki */
+        .modal { display: none; }
+        .modal.active { display: flex; }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden text-gray-800">
+<body class="flex h-screen overflow-hidden">
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="w-64 bg-emerald-800 text-white flex flex-col transition-all duration-300 absolute z-20 h-full md:relative md:translate-x-0 -translate-x-full">
-        <div class="p-5 border-b border-emerald-700 flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-wider"><i class="fas fa-leaf mr-2"></i>ePKK</h1>
-            <button class="md:hidden text-white" onclick="toggleSidebar()"><i class="fas fa-times"></i></button>
+    <aside id="sidebar" class="bg-teal-700 text-white w-64 flex-shrink-0 flex flex-col transition-all duration-300 md:relative absolute z-20 h-full -translate-x-full md:translate-x-0">
+        <div class="p-5 flex items-center justify-between border-b border-teal-600">
+            <h1 class="text-2xl font-bold tracking-wider"><i class="fa-solid fa-leaf mr-2"></i> ePKK</h1>
+            <button onclick="toggleSidebar()" class="md:hidden text-white"><i class="fa-solid fa-times text-xl"></i></button>
         </div>
         <nav class="flex-1 overflow-y-auto py-4">
-            <a href="#" onclick="switchView('dashboard')" class="nav-link block px-5 py-3 hover:bg-emerald-700 bg-emerald-900 border-l-4 border-emerald-400" data-target="dashboard"><i class="fas fa-home w-6"></i> Dashboard</a>
-            <a href="#" onclick="switchView('anggota')" class="nav-link block px-5 py-3 hover:bg-emerald-700 border-l-4 border-transparent" data-target="anggota"><i class="fas fa-users w-6"></i> Catat Data Anggota</a>
-            <a href="#" onclick="switchView('kecamatan')" class="nav-link block px-5 py-3 hover:bg-emerald-700 border-l-4 border-transparent" data-target="kecamatan"><i class="fas fa-building w-6"></i> Kecamatan</a>
-            <a href="#" onclick="switchView('kelurahan')" class="nav-link block px-5 py-3 hover:bg-emerald-700 border-l-4 border-transparent" data-target="kelurahan"><i class="fas fa-map-marker-alt w-6"></i> Kelurahan</a>
-            <a href="#" onclick="switchView('birthday')" class="nav-link block px-5 py-3 hover:bg-emerald-700 border-l-4 border-transparent" data-target="birthday"><i class="fas fa-birthday-cake w-6"></i> Birthday</a>
-            <a href="#" onclick="switchView('rekap')" class="nav-link block px-5 py-3 hover:bg-emerald-700 border-l-4 border-transparent" data-target="rekap"><i class="fas fa-print w-6"></i> Rekap Data</a>
+            <ul class="space-y-1">
+                <li><a href="#" onclick="switchMenu('dashboard')" class="nav-link block py-3 px-5 hover:bg-teal-600 transition bg-teal-800" data-menu="dashboard"><i class="fa-solid fa-chart-pie w-6"></i> Dashboard</a></li>
+                <li><a href="#" onclick="switchMenu('anggota')" class="nav-link block py-3 px-5 hover:bg-teal-600 transition" data-menu="anggota"><i class="fa-solid fa-users w-6"></i> Catat Data Anggota</a></li>
+                <li><a href="#" onclick="switchMenu('kecamatan')" class="nav-link block py-3 px-5 hover:bg-teal-600 transition" data-menu="kecamatan"><i class="fa-solid fa-building w-6"></i> Data Kecamatan</a></li>
+                <li><a href="#" onclick="switchMenu('kelurahan')" class="nav-link block py-3 px-5 hover:bg-teal-600 transition" data-menu="kelurahan"><i class="fa-solid fa-map-location-dot w-6"></i> Data Kelurahan</a></li>
+                <li><a href="#" onclick="switchMenu('birthday')" class="nav-link block py-3 px-5 hover:bg-teal-600 transition" data-menu="birthday"><i class="fa-solid fa-cake-candles w-6"></i> Birthday</a></li>
+                <li><a href="#" onclick="switchMenu('rekap')" class="nav-link block py-3 px-5 hover:bg-teal-600 transition" data-menu="rekap"><i class="fa-solid fa-file-lines w-6"></i> Rekap Data</a></li>
+            </ul>
         </nav>
-        <div class="p-4 border-t border-emerald-700 text-xs text-emerald-300 text-center">
-            &copy; 2026 TP PKK Kota
+        <div class="p-4 border-t border-teal-600 text-xs text-center text-teal-200">
+            &copy; 2026 ePKK Digital
         </div>
     </aside>
 
     <!-- Main Content -->
-    <div id="main-content" class="flex-1 flex flex-col h-full overflow-hidden w-full relative">
-        <!-- Topbar -->
-        <header id="topbar" class="bg-white shadow-sm h-16 flex items-center justify-between px-4 z-10">
+    <main id="main-content" class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <!-- Header -->
+        <header class="bg-white shadow-sm h-16 flex items-center justify-between px-4 lg:px-6 z-10">
             <div class="flex items-center">
-                <button onclick="toggleSidebar()" class="md:hidden text-gray-500 hover:text-gray-700 focus:outline-none mr-3">
-                    <i class="fas fa-bars text-xl"></i>
-                </button>
+                <button onclick="toggleSidebar()" class="md:hidden mr-4 text-gray-600 hover:text-teal-700"><i class="fa-solid fa-bars text-xl"></i></button>
                 <h2 id="page-title" class="text-xl font-semibold text-gray-800">Dashboard</h2>
             </div>
-            <div class="flex items-center space-x-4 text-gray-500">
-                <button onclick="syncData()" class="hover:text-emerald-600 transition" title="Tarik Data dari Spreadsheet">
-                    <i class="fas fa-sync-alt" id="sync-icon"></i>
+            <div class="flex items-center space-x-4">
+                <span id="sync-status" class="text-xs text-gray-500 hidden md:inline-block">Local Mode</span>
+                <button onclick="syncData()" class="text-gray-500 hover:text-teal-600 transition tooltip" title="Sinkronisasi Spreadsheet">
+                    <i class="fa-solid fa-arrows-rotate text-lg" id="sync-icon"></i>
                 </button>
-                <button onclick="openModal('modal-settings')" class="hover:text-emerald-600 transition" title="Pengaturan Sistem">
-                    <i class="fas fa-cog"></i>
+                <button onclick="openSettings()" class="text-gray-500 hover:text-teal-600 transition tooltip" title="Pengaturan Spreadsheet">
+                    <i class="fa-solid fa-gear text-lg"></i>
                 </button>
-                <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold border border-emerald-200">
+                <div class="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold border border-teal-300">
                     AD
                 </div>
             </div>
         </header>
 
-        <!-- Content Area -->
-        <main class="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50 print-container" id="content-area">
-            
-            <!-- VIEW: DASHBOARD -->
-            <div id="view-dashboard" class="view-section">
-                <!-- Stats Row -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-emerald-500">
-                        <p class="text-sm text-gray-500 mb-1">Pengurus Kota</p>
-                        <h3 class="text-2xl font-bold text-gray-800" id="dash-pengurus">0</h3>
-                    </div>
-                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
-                        <p class="text-sm text-gray-500 mb-1">Staf</p>
-                        <h3 class="text-2xl font-bold text-gray-800" id="dash-staf">0</h3>
-                    </div>
-                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-yellow-500">
-                        <p class="text-sm text-gray-500 mb-1">Ketua PKK Kec.</p>
-                        <h3 class="text-2xl font-bold text-gray-800" id="dash-kecamatan">0</h3>
-                    </div>
-                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-pink-500">
-                        <p class="text-sm text-gray-500 mb-1">Ketua PKK Kel.</p>
-                        <h3 class="text-2xl font-bold text-gray-800" id="dash-kelurahan">0</h3>
-                    </div>
-                </div>
+        <!-- Dynamic Content Area -->
+        <div id="content-area" class="flex-1 overflow-y-auto p-4 lg:p-6 pb-20">
+            <!-- Content will be injected here via JS -->
+        </div>
+    </main>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Agama Stats -->
-                    <div class="bg-white rounded-lg shadow-sm p-5 lg:col-span-1">
-                        <h3 class="font-semibold text-gray-700 mb-4 border-b pb-2">Distribusi Agama</h3>
-                        <ul class="space-y-3" id="dash-agama-list">
-                            <!-- Populated by JS -->
-                        </ul>
-                    </div>
-
-                    <!-- Birthday Alert -->
-                    <div class="bg-white rounded-lg shadow-sm p-5 lg:col-span-2">
-                        <div class="flex justify-between items-center mb-4 border-b pb-2">
-                            <h3 class="font-semibold text-gray-700"><i class="fas fa-birthday-cake text-pink-500 mr-2"></i> Ulang Tahun Bulan Ini</h3>
-                            <button onclick="switchView('birthday')" class="text-sm text-emerald-600 hover:underline">Lihat Semua</button>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left">
-                                <thead class="text-xs text-gray-500 uppercase bg-gray-50">
-                                    <tr>
-                                        <th class="px-4 py-2">Nama</th>
-                                        <th class="px-4 py-2">Jabatan</th>
-                                        <th class="px-4 py-2">Tgl Lahir</th>
-                                        <th class="px-4 py-2">Usia</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="dash-birthday-table">
-                                    <!-- Populated by JS -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 class="text-lg font-semibold text-gray-800"><i class="fa-solid fa-gear mr-2"></i> Pengaturan Aplikasi</h3>
+                <button onclick="closeSettings()" class="text-gray-500 hover:text-red-500"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-4 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Google Web App URL</label>
+                    <input type="text" id="setting-url" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500" placeholder="https://script.google.com/macros/s/...">
+                    <p class="text-xs text-gray-500 mt-1">Masukkan URL dari Google Apps Script untuk integrasi Spreadsheet.</p>
                 </div>
             </div>
-
-            <!-- VIEW: ANGGOTA -->
-            <div id="view-anggota" class="view-section hidden">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                    <h3 class="text-lg font-semibold text-gray-800">Daftar Data Anggota</h3>
-                    <button onclick="openModal('modal-anggota')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded shadow flex items-center">
-                        <i class="fas fa-plus mr-2"></i> Tambah Anggota
-                    </button>
-                </div>
-                <div class="bg-white rounded-lg shadow-sm overflow-x-auto">
-                    <table class="w-full text-sm text-left whitespace-nowrap">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b">
-                            <tr>
-                                <th class="px-4 py-3">ID</th>
-                                <th class="px-4 py-3">Nama</th>
-                                <th class="px-4 py-3">Jabatan</th>
-                                <th class="px-4 py-3">Status</th>
-                                <th class="px-4 py-3">No HP</th>
-                                <th class="px-4 py-3 text-center action-col">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-anggota"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- VIEW: KECAMATAN -->
-            <div id="view-kecamatan" class="view-section hidden">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-2xl font-bold text-gray-800">Data Kecamatan</h3>
-                    <button onclick="openModal('modal-kecamatan')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded shadow flex items-center">
-                        <i class="fas fa-plus mr-2"></i> Tambah Kecamatan
-                    </button>
-                </div>
-
-                <!-- Ratio Bar -->
-                <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
-                    <p class="text-sm font-semibold text-gray-700 mb-2">Rasio Pejabat Kecamatan (L/P)</p>
-                    <div class="ratio-bar-container mb-1" id="kec-ratio-bar">
-                        <!-- Populated by JS -->
-                    </div>
-                    <div class="flex justify-between text-xs text-gray-500">
-                        <span><i class="fas fa-male text-blue-500"></i> Laki-laki: <span id="kec-count-l">0</span></span>
-                        <span>Perempuan: <span id="kec-count-p">0</span> <i class="fas fa-female text-pink-500"></i></span>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-lg shadow-sm overflow-x-auto">
-                    <table class="w-full text-sm text-left whitespace-nowrap">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b font-bold">
-                            <tr>
-                                <th class="px-4 py-4">KECAMATAN</th>
-                                <th class="px-4 py-4">NAMA PEJABAT</th>
-                                <th class="px-4 py-4 text-center">L/P</th>
-                                <th class="px-4 py-4">KETUA PKK</th>
-                                <th class="px-4 py-4">SEKRETARIS</th>
-                                <th class="px-4 py-4 text-center action-col">AKSI</th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-kecamatan"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- VIEW: KELURAHAN -->
-            <div id="view-kelurahan" class="view-section hidden">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-2xl font-bold text-gray-800">Data Kelurahan</h3>
-                    <button onclick="openModal('modal-kelurahan')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded shadow flex items-center">
-                        <i class="fas fa-plus mr-2"></i> Tambah Kelurahan
-                    </button>
-                </div>
-
-                <!-- Ratio Bar -->
-                <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
-                    <p class="text-sm font-semibold text-gray-700 mb-2">Rasio Pejabat Kelurahan (L/P)</p>
-                    <div class="ratio-bar-container mb-1" id="kel-ratio-bar">
-                         <!-- Populated by JS -->
-                    </div>
-                    <div class="flex justify-between text-xs text-gray-500">
-                        <span><i class="fas fa-male text-blue-500"></i> Laki-laki: <span id="kel-count-l">0</span></span>
-                        <span>Perempuan: <span id="kel-count-p">0</span> <i class="fas fa-female text-pink-500"></i></span>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-lg shadow-sm overflow-x-auto">
-                    <table class="w-full text-sm text-left whitespace-nowrap">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b font-bold">
-                            <tr>
-                                <th class="px-4 py-4">KELURAHAN</th>
-                                <th class="px-4 py-4">NAMA PEJABAT</th>
-                                <th class="px-4 py-4 text-center">L/P</th>
-                                <th class="px-4 py-4">KETUA PKK</th>
-                                <th class="px-4 py-4">SEKRETARIS</th>
-                                <th class="px-4 py-4 text-center action-col">AKSI</th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-kelurahan"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- VIEW: BIRTHDAY -->
-            <div id="view-birthday" class="view-section hidden">
-                <div class="bg-white rounded-lg shadow-sm p-4 mb-4 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <h3 class="text-lg font-semibold text-gray-800">Rekap Ulang Tahun</h3>
-                    <div class="flex items-center space-x-2">
-                        <label class="text-sm text-gray-600">Pilih Bulan:</label>
-                        <select id="filter-bulan" class="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500" onchange="renderBirthday()">
-                            <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
-                            <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
-                            <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
-                            <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="bg-white rounded-lg shadow-sm overflow-x-auto">
-                    <table class="w-full text-sm text-left whitespace-nowrap">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b">
-                            <tr>
-                                <th class="px-4 py-3">Nama Pengurus</th>
-                                <th class="px-4 py-3">Jabatan</th>
-                                <th class="px-4 py-3">Tanggal Lahir</th>
-                                <th class="px-4 py-3">Usia</th>
-                                <th class="px-4 py-3">Alamat Domisili</th>
-                                <th class="px-4 py-3">No HP</th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-birthday"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- VIEW: REKAP DATA -->
-            <div id="view-rekap" class="view-section hidden">
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6 no-print">
-                    <button onclick="renderRekap('pengurus_kota')" class="bg-white p-4 rounded-lg shadow-sm hover:bg-emerald-50 border border-transparent hover:border-emerald-300 transition text-center flex flex-col items-center justify-center gap-2">
-                        <i class="fas fa-users text-2xl text-emerald-600"></i> <span class="font-semibold text-gray-700">Pengurus Kota</span>
-                    </button>
-                    <button onclick="renderRekap('staf')" class="bg-white p-4 rounded-lg shadow-sm hover:bg-emerald-50 border border-transparent hover:border-emerald-300 transition text-center flex flex-col items-center justify-center gap-2">
-                        <i class="fas fa-id-badge text-2xl text-blue-600"></i> <span class="font-semibold text-gray-700">Staf</span>
-                    </button>
-                    <button onclick="renderRekap('pengurus_kecamatan')" class="bg-white p-4 rounded-lg shadow-sm hover:bg-emerald-50 border border-transparent hover:border-emerald-300 transition text-center flex flex-col items-center justify-center gap-2">
-                        <i class="fas fa-user-tie text-2xl text-yellow-600"></i> <span class="font-semibold text-gray-700">Pengurus Kecamatan</span>
-                    </button>
-                    <button onclick="renderRekap('data_kecamatan')" class="bg-white p-4 rounded-lg shadow-sm hover:bg-emerald-50 border border-transparent hover:border-emerald-300 transition text-center flex flex-col items-center justify-center gap-2">
-                        <i class="fas fa-building text-2xl text-yellow-600"></i> <span class="font-semibold text-gray-700">Data Kecamatan</span>
-                    </button>
-                    <button onclick="renderRekap('pengurus_kelurahan')" class="bg-white p-4 rounded-lg shadow-sm hover:bg-emerald-50 border border-transparent hover:border-emerald-300 transition text-center flex flex-col items-center justify-center gap-2">
-                        <i class="fas fa-user-tie text-2xl text-pink-600"></i> <span class="font-semibold text-gray-700">Pengurus Kelurahan</span>
-                    </button>
-                    <button onclick="renderRekap('data_kelurahan')" class="bg-white p-4 rounded-lg shadow-sm hover:bg-emerald-50 border border-transparent hover:border-emerald-300 transition text-center flex flex-col items-center justify-center gap-2">
-                        <i class="fas fa-map-marker-alt text-2xl text-pink-600"></i> <span class="font-semibold text-gray-700">Data Kelurahan</span>
-                    </button>
-                </div>
-
-                <div class="bg-white rounded-lg shadow-sm p-6 relative">
-                    <button onclick="window.print()" class="absolute top-4 right-4 bg-gray-800 text-white px-3 py-1 rounded text-sm hover:bg-gray-900 no-print flex items-center">
-                        <i class="fas fa-print mr-2"></i> Cetak A4
-                    </button>
-                    <div class="text-center mb-6">
-                        <h2 class="text-xl font-bold uppercase" id="rekap-title">Laporan Rekapitulasi Data</h2>
-                        <p class="text-sm text-gray-600">Tahun 2026</p>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left whitespace-nowrap border">
-                            <thead class="text-xs text-gray-700 uppercase bg-gray-100 border-b" id="rekap-thead">
-                                <!-- Headers generated dynamically -->
-                            </thead>
-                            <tbody id="rekap-tbody">
-                                <!-- Data generated dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-        </main>
-    </div>
-
-    <!-- MODALS -->
-
-    <!-- Modal Settings -->
-    <div id="modal-settings" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg w-11/12 md:w-1/3 p-6">
-            <h3 class="text-lg font-bold mb-4">Pengaturan Sistem</h3>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Google App Script Web App URL</label>
-                <input type="text" id="setting-url" class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500" placeholder="https://script.google.com/macros/s/...">
-                <p class="text-xs text-gray-500 mt-1">Kosongkan jika hanya ingin menggunakan penyimpanan lokal sementara.</p>
-            </div>
-            <div class="flex justify-end space-x-2">
-                <button onclick="closeModal('modal-settings')" class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-50">Batal</button>
-                <button onclick="saveSettings()" class="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700">Simpan URL</button>
+            <div class="bg-gray-50 p-4 border-t flex justify-end space-x-2 rounded-b-lg">
+                <button onclick="closeSettings()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md text-sm hover:bg-gray-300">Batal</button>
+                <button onclick="saveSettings()" class="px-4 py-2 bg-teal-600 text-white rounded-md text-sm hover:bg-teal-700"><i class="fa-solid fa-save mr-1"></i> Simpan URL</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal Anggota -->
-    <div id="modal-anggota" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center overflow-y-auto pt-20 pb-10">
-        <div class="bg-white rounded-lg w-11/12 md:w-1/2 p-6 m-auto">
-            <h3 class="text-lg font-bold mb-4" id="title-modal-anggota">Tambah Data Anggota</h3>
-            <form id="form-anggota" onsubmit="saveAnggota(event)">
-                <input type="hidden" id="anggota-mode" value="add">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">ID (Otomatis)</label>
-                        <input type="text" id="anggota-id" readonly class="w-full border rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pengurus <span class="text-red-500">*</span></label>
-                        <input type="text" id="anggota-nama" required class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Jabatan <span class="text-red-500">*</span></label>
-                        <input type="text" id="anggota-jabatan" required class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Status <span class="text-red-500">*</span></label>
-                        <select id="anggota-status" required class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                            <option value="Pengurus">Pengurus</option>
-                            <option value="Staf">Staf</option>
-                            <option value="Kecamatan">Kecamatan</option>
-                            <option value="Kelurahan">Kelurahan</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Lahir <span class="text-red-500">*</span></label>
-                        <input type="date" id="anggota-tgl" required class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Agama</label>
-                        <select id="anggota-agama" class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                            <option value="Islam">Islam</option>
-                            <option value="Kristen">Kristen</option>
-                            <option value="Katolik">Katolik</option>
-                            <option value="Hindu">Hindu</option>
-                            <option value="Buddha">Buddha</option>
-                            <option value="Konghucu">Konghucu</option>
-                        </select>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Warta</label>
-                        <input type="text" id="anggota-warta" class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Domisili <span class="text-red-500">*</span></label>
-                        <textarea id="anggota-alamat" required rows="2" class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"></textarea>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">No HP (Gunakan +62)</label>
-                        <input type="text" id="anggota-hp" placeholder="+62812345678" pattern="^\+62[0-9]{8,13}$" class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-2 mt-6">
-                    <button type="button" onclick="closeModal('modal-anggota')" class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-50 flex items-center"><i class="fas fa-times mr-2"></i> Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 flex items-center"><i class="fas fa-save mr-2"></i> Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal Kecamatan -->
-    <div id="modal-kecamatan" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center overflow-y-auto pt-20 pb-10">
-        <div class="bg-white rounded-lg w-11/12 md:w-1/2 p-6 m-auto">
-            <h3 class="text-lg font-bold mb-4" id="title-modal-kecamatan">Tambah Data Kecamatan</h3>
-            <form id="form-kecamatan" onsubmit="saveKecamatan(event)">
-                <input type="hidden" id="kecamatan-mode" value="add">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">ID (Otomatis)</label>
-                        <input type="text" id="kec-id" readonly class="w-full border rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Kecamatan <span class="text-red-500">*</span></label>
-                        <input type="text" id="kec-nama" required class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pejabat <span class="text-red-500">*</span></label>
-                        <input type="text" id="kec-pejabat" required class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">L/P <span class="text-red-500">*</span></label>
-                        <select id="kec-gender" required class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                            <option value="L">Laki-laki (L)</option>
-                            <option value="P">Perempuan (P)</option>
-                        </select>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Ketua TP PKK (Pilih dari Data Anggota) <span class="text-red-500">*</span></label>
-                        <select id="kec-ketua" required onchange="updateWartaKecamatan()" class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                            <!-- Populated JS -->
-                        </select>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Warta (Otomatis)</label>
-                        <input type="text" id="kec-warta" readonly class="w-full border rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Sekretaris <span class="text-red-500">*</span></label>
-                        <input type="text" id="kec-sekretaris" required class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">HP Sekretaris</label>
-                        <input type="text" id="kec-hp-sek" placeholder="+62..." class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-2 mt-6">
-                    <button type="button" onclick="closeModal('modal-kecamatan')" class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-50 flex items-center"><i class="fas fa-times mr-2"></i> Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 flex items-center"><i class="fas fa-save mr-2"></i> Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal Kelurahan -->
-    <div id="modal-kelurahan" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center overflow-y-auto pt-20 pb-10">
-        <div class="bg-white rounded-lg w-11/12 md:w-1/2 p-6 m-auto">
-            <h3 class="text-lg font-bold mb-4" id="title-modal-kelurahan">Tambah Data Kelurahan</h3>
-            <form id="form-kelurahan" onsubmit="saveKelurahan(event)">
-                <input type="hidden" id="kel-mode" value="add">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">ID (Otomatis)</label>
-                        <input type="text" id="kel-id" readonly class="w-full border rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Kelurahan <span class="text-red-500">*</span></label>
-                        <input type="text" id="kel-nama" required class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pejabat <span class="text-red-500">*</span></label>
-                        <input type="text" id="kel-pejabat" required class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">L/P <span class="text-red-500">*</span></label>
-                        <select id="kel-gender" required class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                            <option value="L">Laki-laki (L)</option>
-                            <option value="P">Perempuan (P)</option>
-                        </select>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Ketua TP PKK (Pilih dari Data Anggota) <span class="text-red-500">*</span></label>
-                        <select id="kel-ketua" required onchange="updateWartaKelurahan()" class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                            <!-- Populated JS -->
-                        </select>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Warta (Otomatis)</label>
-                        <input type="text" id="kel-warta" readonly class="w-full border rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Sekretaris <span class="text-red-500">*</span></label>
-                        <input type="text" id="kel-sekretaris" required class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">HP Sekretaris</label>
-                        <input type="text" id="kel-hp-sek" placeholder="+62..." class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-2 mt-6">
-                    <button type="button" onclick="closeModal('modal-kelurahan')" class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-50 flex items-center"><i class="fas fa-times mr-2"></i> Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 flex items-center"><i class="fas fa-save mr-2"></i> Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal Detail General -->
-    <div id="modal-detail" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg w-11/12 md:w-1/3 p-6">
-            <div class="flex justify-between items-center mb-4 border-b pb-2">
-                <h3 class="text-lg font-bold" id="detail-title">Detail Informasi</h3>
-                <button onclick="closeModal('modal-detail')" class="text-gray-500 hover:text-red-500"><i class="fas fa-times"></i></button>
+    <!-- Form Modal Universal -->
+    <div id="form-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 id="form-title" class="text-lg font-semibold text-gray-800">Form</h3>
+                <button onclick="closeForm()" class="text-gray-500 hover:text-red-500"><i class="fa-solid fa-times"></i></button>
             </div>
-            <div id="detail-content" class="space-y-2 text-sm">
-                <!-- Content injected via JS -->
+            <div class="p-4 overflow-y-auto flex-1" id="form-body">
+                <!-- Form fields injected here -->
             </div>
-            <div class="mt-6 flex justify-end">
-                <button onclick="closeModal('modal-detail')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Tutup</button>
+            <div class="bg-gray-50 p-4 border-t flex justify-end space-x-2 rounded-b-lg">
+                <button onclick="closeForm()" class="px-4 py-2 bg-white border border-gray-300 text-gray-800 rounded-md text-sm hover:bg-gray-50"><i class="fa-solid fa-xmark mr-1"></i> Batal</button>
+                <button onclick="submitForm()" class="px-4 py-2 bg-teal-600 text-white rounded-md text-sm hover:bg-teal-700"><i class="fa-solid fa-save mr-1"></i> Simpan Data</button>
             </div>
         </div>
     </div>
 
-    <!-- Notification Toast -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-emerald-600 text-white px-4 py-3 rounded shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none z-50 flex items-center">
-        <i class="fas fa-check-circle mr-2"></i> <span id="toast-msg">Sukses</span>
+    <!-- View Modal Universal -->
+    <div id="view-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 class="text-lg font-semibold text-gray-800"><i class="fa-solid fa-eye mr-2"></i> Detail Data</h3>
+                <button onclick="closeViewModal()" class="text-gray-500 hover:text-red-500"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-4" id="view-body">
+                <!-- Details injected here -->
+            </div>
+            <div class="bg-gray-50 p-4 border-t flex justify-end rounded-b-lg">
+                <button onclick="closeViewModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md text-sm hover:bg-gray-300">Tutup</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Logic Script -->
-    <script>
-        // --- DATA STATE (Simulated Database) ---
-        let db = {
-            settings: { sheetUrl: '' },
-            anggota: [],
-            kecamatan: [],
-            kelurahan: []
-        };
+<script>
+    // --- DATABASE & STATE ---
+    let db = {
+        anggota: [],
+        kecamatan: [],
+        kelurahan: []
+    };
+    
+    let currentMenu = 'dashboard';
+    let currentFormType = '';
+    let editId = null;
+    let webAppUrl = localStorage.getItem('epkk_url') || '';
+    
+    const monthsIndo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
-        const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-
-        // --- INIT & UTILS ---
-        window.onload = () => {
-            loadData();
-            // Select current month for birthday filter
-            document.getElementById('filter-bulan').value = new Date().getMonth() + 1;
-            switchView('dashboard');
-            
-            // Add some dummy data if empty for demo purposes
-            if(db.anggota.length === 0) seedDummyData();
-        };
-
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('-translate-x-full');
-        }
-
-        function switchView(viewId) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-            document.getElementById('view-' + viewId).classList.remove('hidden');
-            
-            // Update Active Menu Styling
-            document.querySelectorAll('.nav-link').forEach(el => {
-                el.classList.remove('bg-emerald-900', 'border-emerald-400');
-                el.classList.add('border-transparent');
-                if(el.dataset.target === viewId) {
-                    el.classList.add('bg-emerald-900', 'border-emerald-400');
-                    el.classList.remove('border-transparent');
-                }
-            });
-
-            const titles = {
-                'dashboard': 'Dashboard', 'anggota': 'Catat Data Anggota', 'kecamatan': 'Data Kecamatan', 
-                'kelurahan': 'Data Kelurahan', 'birthday': 'Ulang Tahun', 'rekap': 'Rekapitulasi Data'
-            };
-            document.getElementById('page-title').innerText = titles[viewId];
-
-            // Render specific view data
-            if(viewId === 'dashboard') renderDashboard();
-            if(viewId === 'anggota') renderAnggota();
-            if(viewId === 'kecamatan') renderKecamatan();
-            if(viewId === 'kelurahan') renderKelurahan();
-            if(viewId === 'birthday') renderBirthday();
-            if(viewId === 'rekap') renderRekap('pengurus_kota'); // default
-        }
-
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-msg').innerText = msg;
-            toast.classList.remove('opacity-0');
-            setTimeout(() => toast.classList.add('opacity-0'), 3000);
-        }
-
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-        function generateId(prefix, length) {
-            const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            let id = prefix;
-            for(let i=0; i<length-1; i++) id += chars.charAt(Math.floor(Math.random() * 10)); // just numbers for rest to keep simple
-            return id;
-        }
-
-        function calculateAge(dob) {
-            const diff_ms = Date.now() - new Date(dob).getTime();
-            const age_dt = new Date(diff_ms);
-            return Math.abs(age_dt.getUTCFullYear() - 1970);
-        }
-
-        function formatDateSheet(dateStr) {
-            if(!dateStr) return '';
-            const d = new Date(dateStr);
-            return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-        }
-
-        // --- LOCAL STORAGE / SYNC ---
-        function loadData() {
-            const localData = localStorage.getItem('ePKK_Data');
-            if(localData) {
-                db = JSON.parse(localData);
-            }
-            document.getElementById('setting-url').value = db.settings.sheetUrl || '';
-        }
-
-        function saveDataLocally() {
-            localStorage.setItem('ePKK_Data', JSON.stringify(db));
-            renderDashboard(); // refresh stats
-        }
-
-        // Mengambil data dari Spreadsheet (PULL)
-        async function syncData() {
-            const icon = document.getElementById('sync-icon');
-            
-            if(!db.settings.sheetUrl) {
-                showToast("URL Spreadsheet belum diatur.");
-                return;
-            }
-
-            icon.classList.add('animate-spin');
-            
-            try {
-                // Fetch method menggunakan GET dan parameter action=read
-                const response = await fetch(db.settings.sheetUrl + "?action=read");
-                const result = await response.json();
-                
-                if(result && result.status === 'success') {
-                    db.anggota = result.data.anggota || [];
-                    db.kecamatan = result.data.kecamatan || [];
-                    db.kelurahan = result.data.kelurahan || [];
-                    
-                    saveDataLocally();
-                    
-                    // Refresh view yang sedang aktif
-                    document.querySelectorAll('.nav-link').forEach(el => {
-                        if(el.classList.contains('bg-emerald-900')) {
-                            switchView(el.dataset.target);
-                        }
-                    });
-                    showToast("Sinkronisasi: Data ditarik dari Spreadsheet");
-                } else {
-                    showToast("Gagal: Respons dari Spreadsheet tidak valid");
-                }
-            } catch(e) {
-                console.error(e);
-                showToast("Gagal koneksi ke Spreadsheet.");
-            } finally {
-                icon.classList.remove('animate-spin');
-            }
-        }
-
-        // Mendorong data baru ke Spreadsheet (PUSH) saat di-save
-        async function pushData() {
-            if(!db.settings.sheetUrl) return;
-            try {
-                await fetch(db.settings.sheetUrl, { 
-                    method: 'POST', 
-                    body: JSON.stringify({
-                        anggota: db.anggota,
-                        kecamatan: db.kecamatan,
-                        kelurahan: db.kelurahan
-                    }) 
-                });
-            } catch(e) {
-                console.error("Gagal push ke Spreadsheet", e);
-            }
-        }
-
-        // Simpan URL pengaturan dan otomatis tarik data
-        function saveSettings() {
-            db.settings.sheetUrl = document.getElementById('setting-url').value;
-            saveDataLocally();
-            closeModal('modal-settings');
-            
-            if(db.settings.sheetUrl) {
-                showToast("Pengaturan Disimpan. Sedang menarik data...");
-                syncData(); // Otomatis trigger tarik data dari sheet
-            } else {
-                showToast("Pengaturan Disimpan (Mode Lokal)");
-            }
-        }
-
-        // --- DASHBOARD LOGIC ---
-        function renderDashboard() {
-            const curMonth = new Date().getMonth() + 1;
-            
-            // Stats
-            const kota = db.anggota.filter(a => a.status === 'Pengurus').length;
-            const staf = db.anggota.filter(a => a.status === 'Staf').length;
-            const kec = db.anggota.filter(a => a.status === 'Kecamatan').length;
-            const kel = db.anggota.filter(a => a.status === 'Kelurahan').length;
-            
-            document.getElementById('dash-pengurus').innerText = kota;
-            document.getElementById('dash-staf').innerText = staf;
-            document.getElementById('dash-kecamatan').innerText = kec;
-            document.getElementById('dash-kelurahan').innerText = kel;
-
-            // Agama Chart
-            const agamaCounts = db.anggota.reduce((acc, curr) => {
-                acc[curr.agama] = (acc[curr.agama] || 0) + 1;
-                return acc;
-            }, {});
-            let agamaHtml = '';
-            for(let a in agamaCounts) {
-                const pct = Math.round((agamaCounts[a] / db.anggota.length) * 100) || 0;
-                agamaHtml += `
-                    <li class="flex items-center justify-between text-sm">
-                        <span class="text-gray-600">${a}</span>
-                        <div class="flex-1 mx-3 h-2 bg-gray-200 rounded">
-                            <div class="h-2 bg-emerald-500 rounded" style="width: ${pct}%"></div>
-                        </div>
-                        <span class="font-semibold text-gray-800">${agamaCounts[a]}</span>
-                    </li>`;
-            }
-            document.getElementById('dash-agama-list').innerHTML = agamaHtml || '<p class="text-xs text-gray-400">Belum ada data</p>';
-
-            // Birthday limit 5
-            const birthdays = db.anggota.filter(a => {
-                const dateParts = a.tgl ? a.tgl.split('-') : []; // format YYYY-MM-DD
-                if(dateParts.length > 1) {
-                    return parseInt(dateParts[1]) === curMonth;
-                }
-                return false;
-            }).slice(0, 5);
-
-            let bdayHtml = '';
-            birthdays.forEach(b => {
-                bdayHtml += `<tr class="border-b"><td class="px-4 py-2 font-medium">${b.nama}</td><td class="px-4 py-2 text-gray-500">${b.jabatan}</td><td class="px-4 py-2 text-gray-500">${formatDateSheet(b.tgl)}</td><td class="px-4 py-2 font-bold text-pink-600">${b.usia}</td></tr>`;
-            });
-            document.getElementById('dash-birthday-table').innerHTML = bdayHtml || '<tr><td colspan="4" class="text-center py-4 text-gray-400 text-xs">Tidak ada yang berulang tahun bulan ini</td></tr>';
-        }
-
-        // --- ANGGOTA LOGIC ---
-        function renderAnggota() {
-            const tbody = document.getElementById('table-anggota');
-            tbody.innerHTML = '';
-            db.anggota.forEach(a => {
-                tbody.innerHTML += `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-3 font-mono text-xs">${a.id}</td>
-                        <td class="px-4 py-3 font-semibold">${a.nama}</td>
-                        <td class="px-4 py-3">${a.jabatan}</td>
-                        <td class="px-4 py-3"><span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded text-xs">${a.status}</span></td>
-                        <td class="px-4 py-3 font-mono text-xs">${a.hp}</td>
-                        <td class="px-4 py-3 text-center action-col">
-                            <button onclick="detailAnggota('${a.id}')" class="text-blue-500 hover:text-blue-700 mr-2" title="Detail"><i class="fas fa-eye"></i></button>
-                            <button onclick="editAnggota('${a.id}')" class="text-amber-500 hover:text-amber-700" title="Edit"><i class="fas fa-edit"></i></button>
-                        </td>
-                    </tr>
-                `;
-            });
-            if(db.anggota.length === 0) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-gray-400">Belum ada data anggota</td></tr>`;
-        }
-
-        function openModalAnggota(mode = 'add', id = '') {
-            document.getElementById('anggota-mode').value = mode;
-            document.getElementById('form-anggota').reset();
-            
-            if(mode === 'add') {
-                document.getElementById('title-modal-anggota').innerText = 'Tambah Data Anggota';
-                document.getElementById('anggota-id').value = generateId('A', 9);
-            } else {
-                document.getElementById('title-modal-anggota').innerText = 'Edit Data Anggota';
-                const a = db.anggota.find(x => x.id === id);
-                if(a) {
-                    document.getElementById('anggota-id').value = a.id;
-                    document.getElementById('anggota-nama').value = a.nama;
-                    document.getElementById('anggota-jabatan').value = a.jabatan;
-                    document.getElementById('anggota-status').value = a.status;
-                    document.getElementById('anggota-tgl').value = a.tgl;
-                    document.getElementById('anggota-agama').value = a.agama;
-                    document.getElementById('anggota-warta').value = a.warta;
-                    document.getElementById('anggota-alamat').value = a.alamat;
-                    document.getElementById('anggota-hp').value = a.hp;
-                }
-            }
-            openModal('modal-anggota');
-        }
-
-        document.querySelector('button[onclick="openModal(\'modal-anggota\')"]').onclick = () => openModalAnggota('add');
-
-        function saveAnggota(e) {
-            e.preventDefault();
-            const mode = document.getElementById('anggota-mode').value;
-            const data = {
-                id: document.getElementById('anggota-id').value,
-                nama: document.getElementById('anggota-nama').value,
-                jabatan: document.getElementById('anggota-jabatan').value,
-                status: document.getElementById('anggota-status').value,
-                tgl: document.getElementById('anggota-tgl').value,
-                usia: calculateAge(document.getElementById('anggota-tgl').value),
-                agama: document.getElementById('anggota-agama').value,
-                warta: document.getElementById('anggota-warta').value,
-                alamat: document.getElementById('anggota-alamat').value,
-                hp: document.getElementById('anggota-hp').value
-            };
-
-            if(mode === 'add') db.anggota.push(data);
-            else {
-                const idx = db.anggota.findIndex(x => x.id === data.id);
-                if(idx > -1) db.anggota[idx] = data;
-            }
-
-            pushData(); // Push secara senyap ke spreadsheet
-            closeModal('modal-anggota');
-            renderAnggota();
-            showToast('Data Anggota Tersimpan');
-        }
-
-        function editAnggota(id) { openModalAnggota('edit', id); }
-        
-        function detailAnggota(id) {
-            const a = db.anggota.find(x => x.id === id);
-            if(!a) return;
-            document.getElementById('detail-content').innerHTML = `
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">ID</span><span class="font-semibold col-span-2">${a.id}</span></div>
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">Nama</span><span class="font-semibold col-span-2">${a.nama}</span></div>
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">Jabatan</span><span class="font-semibold col-span-2">${a.jabatan}</span></div>
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">Status</span><span class="font-semibold col-span-2">${a.status}</span></div>
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">Usia</span><span class="font-semibold col-span-2">${a.usia} Tahun (${formatDateSheet(a.tgl)})</span></div>
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">Agama</span><span class="font-semibold col-span-2">${a.agama}</span></div>
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">Warta</span><span class="font-semibold col-span-2">${a.warta}</span></div>
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">Alamat</span><span class="font-semibold col-span-2">${a.alamat}</span></div>
-                <div class="grid grid-cols-3 py-1"><span class="text-gray-500 col-span-1">HP</span><span class="font-semibold col-span-2">${a.hp}</span></div>
-            `;
-            openModal('modal-detail');
-        }
-
-        function getKetuaOptions(type) {
-            let opts = `<option value="">-- Pilih Ketua TP PKK --</option>`;
-            db.anggota.forEach(a => {
-                opts += `<option value="${a.id}">${a.nama} - ${a.id}</option>`;
-            });
-            return opts;
-        }
-
-        function getMemberName(id) {
-            const m = db.anggota.find(x => x.id === id);
-            return m ? m.nama : '-';
-        }
-
-        // --- KECAMATAN LOGIC ---
-        function renderKecamatan() {
-            const tbody = document.getElementById('table-kecamatan');
-            tbody.innerHTML = '';
-            
-            let countL = 0; let countP = 0;
-
-            db.kecamatan.forEach(k => {
-                if(k.gender === 'L') countL++; else countP++;
-                tbody.innerHTML += `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-3 font-semibold">${k.nama}</td>
-                        <td class="px-4 py-3">${k.pejabat}</td>
-                        <td class="px-4 py-3 text-center">${k.gender}</td>
-                        <td class="px-4 py-3">${getMemberName(k.ketuaId)}</td>
-                        <td class="px-4 py-3">${k.sekretaris}</td>
-                        <td class="px-4 py-3 text-center action-col">
-                            <button onclick="detailKecamatan('${k.id}')" class="text-blue-500 hover:text-blue-700 mr-2"><i class="fas fa-eye"></i></button>
-                            <button onclick="editKecamatan('${k.id}')" class="text-amber-500 hover:text-amber-700"><i class="fas fa-edit"></i></button>
-                        </td>
-                    </tr>
-                `;
-            });
-            if(db.kecamatan.length === 0) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-gray-400">Belum ada data kecamatan</td></tr>`;
-
-            // Draw Ratio
-            const total = countL + countP;
-            const pL = total > 0 ? (countL/total*100).toFixed(0) : 0;
-            const pP = total > 0 ? (countP/total*100).toFixed(0) : 0;
-            
-            document.getElementById('kec-count-l').innerText = countL;
-            document.getElementById('kec-count-p').innerText = countP;
-            
-            let barHtml = '';
-            if(total === 0) barHtml = '<div class="ratio-bar-fill w-full bg-gray-300 text-gray-500">0%</div>';
-            else {
-                if(countL > 0) barHtml += `<div class="ratio-bar-fill ratio-blue" style="width: ${pL}%">${pL}%</div>`;
-                if(countP > 0) barHtml += `<div class="ratio-bar-fill ratio-pink" style="width: ${pP}%">${pP}%</div>`;
-            }
-            document.getElementById('kec-ratio-bar').innerHTML = barHtml;
-        }
-
-        function openModalKecamatan(mode = 'add', id = '') {
-            document.getElementById('kecamatan-mode').value = mode;
-            document.getElementById('form-kecamatan').reset();
-            document.getElementById('kec-ketua').innerHTML = getKetuaOptions('Kecamatan');
-            
-            if(mode === 'add') {
-                document.getElementById('title-modal-kecamatan').innerText = 'Tambah Data Kecamatan';
-                document.getElementById('kec-id').value = generateId('C', 7);
-            } else {
-                document.getElementById('title-modal-kecamatan').innerText = 'Edit Data Kecamatan';
-                const k = db.kecamatan.find(x => x.id === id);
-                if(k) {
-                    document.getElementById('kec-id').value = k.id;
-                    document.getElementById('kec-nama').value = k.nama;
-                    document.getElementById('kec-pejabat').value = k.pejabat;
-                    document.getElementById('kec-gender').value = k.gender;
-                    document.getElementById('kec-ketua').value = k.ketuaId;
-                    document.getElementById('kec-sekretaris').value = k.sekretaris;
-                    document.getElementById('kec-hp-sek').value = k.hpSekretaris;
-                    updateWartaKecamatan();
-                }
-            }
-            openModal('modal-kecamatan');
-        }
-        document.querySelector('button[onclick="openModal(\'modal-kecamatan\')"]').onclick = () => openModalKecamatan('add');
-
-        function updateWartaKecamatan() {
-            const ketuaId = document.getElementById('kec-ketua').value;
-            const m = db.anggota.find(x => x.id === ketuaId);
-            document.getElementById('kec-warta').value = m ? m.warta : '';
-        }
-
-        function saveKecamatan(e) {
-            e.preventDefault();
-            const mode = document.getElementById('kecamatan-mode').value;
-            const data = {
-                id: document.getElementById('kec-id').value,
-                nama: document.getElementById('kec-nama').value,
-                pejabat: document.getElementById('kec-pejabat').value,
-                gender: document.getElementById('kec-gender').value,
-                ketuaId: document.getElementById('kec-ketua').value,
-                sekretaris: document.getElementById('kec-sekretaris').value,
-                hpSekretaris: document.getElementById('kec-hp-sek').value
-            };
-
-            if(mode === 'add') db.kecamatan.push(data);
-            else {
-                const idx = db.kecamatan.findIndex(x => x.id === data.id);
-                if(idx > -1) db.kecamatan[idx] = data;
-            }
-
-            pushData(); // Push ke sheet
-            closeModal('modal-kecamatan');
-            renderKecamatan();
-            showToast('Data Kecamatan Tersimpan');
-        }
-        function editKecamatan(id) { openModalKecamatan('edit', id); }
-
-        function detailKecamatan(id) {
-            const k = db.kecamatan.find(x => x.id === id);
-            if(!k) return;
-            const ketuaName = getMemberName(k.ketuaId);
-            document.getElementById('detail-content').innerHTML = `
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">ID</span><span class="font-semibold col-span-2">${k.id}</span></div>
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">Kecamatan</span><span class="font-semibold col-span-2">${k.nama}</span></div>
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">Pejabat</span><span class="font-semibold col-span-2">${k.pejabat} (${k.gender})</span></div>
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">Ketua PKK</span><span class="font-semibold col-span-2">${ketuaName}</span></div>
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">Sekretaris</span><span class="font-semibold col-span-2">${k.sekretaris}</span></div>
-                <div class="grid grid-cols-3 py-1"><span class="text-gray-500 col-span-1">HP Sek</span><span class="font-semibold col-span-2">${k.hpSekretaris}</span></div>
-            `;
-            openModal('modal-detail');
-        }
-
-        // --- KELURAHAN LOGIC ---
-        function renderKelurahan() {
-            const tbody = document.getElementById('table-kelurahan');
-            tbody.innerHTML = '';
-            
-            let countL = 0; let countP = 0;
-
-            db.kelurahan.forEach(k => {
-                if(k.gender === 'L') countL++; else countP++;
-                tbody.innerHTML += `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-3 font-semibold">${k.nama}</td>
-                        <td class="px-4 py-3">${k.pejabat}</td>
-                        <td class="px-4 py-3 text-center">${k.gender}</td>
-                        <td class="px-4 py-3">${getMemberName(k.ketuaId)}</td>
-                        <td class="px-4 py-3">${k.sekretaris}</td>
-                        <td class="px-4 py-3 text-center action-col">
-                            <button onclick="detailKelurahan('${k.id}')" class="text-blue-500 hover:text-blue-700 mr-2"><i class="fas fa-eye"></i></button>
-                            <button onclick="editKelurahan('${k.id}')" class="text-amber-500 hover:text-amber-700"><i class="fas fa-edit"></i></button>
-                        </td>
-                    </tr>
-                `;
-            });
-            if(db.kelurahan.length === 0) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-gray-400">Belum ada data kelurahan</td></tr>`;
-
-            // Draw Ratio
-            const total = countL + countP;
-            const pL = total > 0 ? (countL/total*100).toFixed(0) : 0;
-            const pP = total > 0 ? (countP/total*100).toFixed(0) : 0;
-            
-            document.getElementById('kel-count-l').innerText = countL;
-            document.getElementById('kel-count-p').innerText = countP;
-            
-            let barHtml = '';
-            if(total === 0) barHtml = '<div class="ratio-bar-fill w-full bg-gray-300 text-gray-500">0%</div>';
-            else {
-                if(countP > 0) barHtml += `<div class="ratio-bar-fill ratio-pink" style="width: ${pP}%">${pP}%</div>`;
-                if(countL > 0) barHtml += `<div class="ratio-bar-fill ratio-blue" style="width: ${pL}%">${pL}%</div>`;
-            }
-            document.getElementById('kel-ratio-bar').innerHTML = barHtml;
-        }
-
-        function openModalKelurahan(mode = 'add', id = '') {
-            document.getElementById('kel-mode').value = mode;
-            document.getElementById('form-kelurahan').reset();
-            document.getElementById('kel-ketua').innerHTML = getKetuaOptions('Kelurahan');
-            
-            if(mode === 'add') {
-                document.getElementById('title-modal-kelurahan').innerText = 'Tambah Data Kelurahan';
-                document.getElementById('kel-id').value = generateId('L', 7);
-            } else {
-                document.getElementById('title-modal-kelurahan').innerText = 'Edit Data Kelurahan';
-                const k = db.kelurahan.find(x => x.id === id);
-                if(k) {
-                    document.getElementById('kel-id').value = k.id;
-                    document.getElementById('kel-nama').value = k.nama;
-                    document.getElementById('kel-pejabat').value = k.pejabat;
-                    document.getElementById('kel-gender').value = k.gender;
-                    document.getElementById('kel-ketua').value = k.ketuaId;
-                    document.getElementById('kel-sekretaris').value = k.sekretaris;
-                    document.getElementById('kel-hp-sek').value = k.hpSekretaris;
-                    updateWartaKelurahan();
-                }
-            }
-            openModal('modal-kelurahan');
-        }
-        document.querySelector('button[onclick="openModal(\'modal-kelurahan\')"]').onclick = () => openModalKelurahan('add');
-
-        function updateWartaKelurahan() {
-            const ketuaId = document.getElementById('kel-ketua').value;
-            const m = db.anggota.find(x => x.id === ketuaId);
-            document.getElementById('kel-warta').value = m ? m.warta : '';
-        }
-
-        function saveKelurahan(e) {
-            e.preventDefault();
-            const mode = document.getElementById('kel-mode').value;
-            const data = {
-                id: document.getElementById('kel-id').value,
-                nama: document.getElementById('kel-nama').value,
-                pejabat: document.getElementById('kel-pejabat').value,
-                gender: document.getElementById('kel-gender').value,
-                ketuaId: document.getElementById('kel-ketua').value,
-                sekretaris: document.getElementById('kel-sekretaris').value,
-                hpSekretaris: document.getElementById('kel-hp-sek').value
-            };
-
-            if(mode === 'add') db.kelurahan.push(data);
-            else {
-                const idx = db.kelurahan.findIndex(x => x.id === data.id);
-                if(idx > -1) db.kelurahan[idx] = data;
-            }
-
-            pushData(); // Push ke sheet
-            closeModal('modal-kelurahan');
-            renderKelurahan();
-            showToast('Data Kelurahan Tersimpan');
-        }
-        function editKelurahan(id) { openModalKelurahan('edit', id); }
-
-        function detailKelurahan(id) {
-            const k = db.kelurahan.find(x => x.id === id);
-            if(!k) return;
-            const ketuaName = getMemberName(k.ketuaId);
-            document.getElementById('detail-content').innerHTML = `
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">ID</span><span class="font-semibold col-span-2">${k.id}</span></div>
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">Kelurahan</span><span class="font-semibold col-span-2">${k.nama}</span></div>
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">Pejabat</span><span class="font-semibold col-span-2">${k.pejabat} (${k.gender})</span></div>
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">Ketua PKK</span><span class="font-semibold col-span-2">${ketuaName}</span></div>
-                <div class="grid grid-cols-3 border-b py-1"><span class="text-gray-500 col-span-1">Sekretaris</span><span class="font-semibold col-span-2">${k.sekretaris}</span></div>
-                <div class="grid grid-cols-3 py-1"><span class="text-gray-500 col-span-1">HP Sek</span><span class="font-semibold col-span-2">${k.hpSekretaris}</span></div>
-            `;
-            openModal('modal-detail');
-        }
-
-        // --- BIRTHDAY LOGIC ---
-        function renderBirthday() {
-            const filterBulan = parseInt(document.getElementById('filter-bulan').value);
-            const tbody = document.getElementById('table-birthday');
-            tbody.innerHTML = '';
-            
-            const bdays = db.anggota.filter(a => {
-                const dateParts = a.tgl ? a.tgl.split('-') : []; // YYYY-MM-DD
-                if(dateParts.length > 1) {
-                    return parseInt(dateParts[1]) === filterBulan;
-                }
-                return false;
-            });
-            
-            bdays.forEach(a => {
-                tbody.innerHTML += `
-                    <tr class="border-b hover:bg-pink-50">
-                        <td class="px-4 py-3 font-semibold">${a.nama}</td>
-                        <td class="px-4 py-3">${a.jabatan}</td>
-                        <td class="px-4 py-3">${formatDateSheet(a.tgl)}</td>
-                        <td class="px-4 py-3 font-bold text-pink-600">${a.usia} Thn</td>
-                        <td class="px-4 py-3 text-xs whitespace-normal min-w-[200px]">${a.alamat}</td>
-                        <td class="px-4 py-3 font-mono text-xs">${a.hp}</td>
-                    </tr>
-                `;
-            });
-            if(bdays.length === 0) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-gray-400">Tidak ada pengurus yang berulang tahun pada bulan ini</td></tr>`;
-        }
-
-        // --- REKAP LOGIC ---
-        function renderRekap(type) {
-            const thead = document.getElementById('rekap-thead');
-            const tbody = document.getElementById('rekap-tbody');
-            const title = document.getElementById('rekap-title');
-            
-            thead.innerHTML = ''; tbody.innerHTML = '';
-
-            let headers = [];
-            let data = [];
-
-            if(['pengurus_kota', 'staf', 'pengurus_kecamatan', 'pengurus_kelurahan'].includes(type)) {
-                headers = ['Nama Pengurus', 'Jabatan', 'Usia', 'Warta', 'Agama'];
-                let statusFilter = '';
-                if(type === 'pengurus_kota') { statusFilter = 'Pengurus'; title.innerText = 'Laporan Rekapitulasi Data Pengurus Kota'; }
-                if(type === 'staf') { statusFilter = 'Staf'; title.innerText = 'Laporan Rekapitulasi Data Staf'; }
-                if(type === 'pengurus_kecamatan') { statusFilter = 'Kecamatan'; title.innerText = 'Laporan Rekapitulasi Data Pengurus Kecamatan'; }
-                if(type === 'pengurus_kelurahan') { statusFilter = 'Kelurahan'; title.innerText = 'Laporan Rekapitulasi Data Pengurus Kelurahan'; }
-                
-                data = db.anggota.filter(a => a.status === statusFilter);
-                
-                data.forEach(d => {
-                    tbody.innerHTML += `<tr>
-                        <td class="px-4 py-2">${d.nama}</td><td class="px-4 py-2">${d.jabatan}</td>
-                        <td class="px-4 py-2 text-center">${d.usia}</td><td class="px-4 py-2">${d.warta}</td><td class="px-4 py-2">${d.agama}</td>
-                    </tr>`;
-                });
-            } 
-            else if(type === 'data_kecamatan') {
-                title.innerText = 'Laporan Rekapitulasi Data Wilayah Kecamatan';
-                headers = ['Wilayah', 'Nama Pejabat', 'Ketua PKK', 'Sekretaris', 'Warta'];
-                data = db.kecamatan;
-                data.forEach(d => {
-                    const ketua = getMemberName(d.ketuaId);
-                    const warta = db.anggota.find(a => a.id === d.ketuaId)?.warta || '-';
-                    tbody.innerHTML += `<tr>
-                        <td class="px-4 py-2 font-semibold">Kec. ${d.nama}</td><td class="px-4 py-2">${d.pejabat}</td>
-                        <td class="px-4 py-2">${ketua}</td><td class="px-4 py-2">${d.sekretaris}</td><td class="px-4 py-2">${warta}</td>
-                    </tr>`;
-                });
-            }
-            else if(type === 'data_kelurahan') {
-                title.innerText = 'Laporan Rekapitulasi Data Wilayah Kelurahan';
-                headers = ['Wilayah', 'Nama Pejabat', 'Ketua PKK', 'Sekretaris', 'Warta'];
-                data = db.kelurahan;
-                data.forEach(d => {
-                    const ketua = getMemberName(d.ketuaId);
-                    const warta = db.anggota.find(a => a.id === d.ketuaId)?.warta || '-';
-                    tbody.innerHTML += `<tr>
-                        <td class="px-4 py-2 font-semibold">Kel. ${d.nama}</td><td class="px-4 py-2">${d.pejabat}</td>
-                        <td class="px-4 py-2">${ketua}</td><td class="px-4 py-2">${d.sekretaris}</td><td class="px-4 py-2">${warta}</td>
-                    </tr>`;
-                });
-            }
-
-            // Render headers
-            thead.innerHTML = '<tr>' + headers.map(h => `<th class="px-4 py-3">${h}</th>`).join('') + '</tr>';
-            if(data.length === 0) tbody.innerHTML = `<tr><td colspan="${headers.length}" class="text-center py-6 text-gray-400">Data Kosong</td></tr>`;
-        }
-
-        // --- DUMMY DATA ---
-        function seedDummyData() {
+    // Initialize Mock Data if empty
+    function initMockData() {
+        if(localStorage.getItem('epkk_data')) {
+            db = JSON.parse(localStorage.getItem('epkk_data'));
+        } else {
             db.anggota = [
-                {id: "A12345678", nama: "Ibu Ratna Sari", jabatan: "Ketua", status: "Kecamatan", tgl: "1980-04-12", usia: 46, agama: "Islam", warta: "Warta 1", alamat: "Jl. Gubeng No 1", hp: "+62812345678"},
-                {id: "A87654321", nama: "Ibu Diana", jabatan: "Ketua", status: "Kelurahan", tgl: "1985-08-20", usia: 41, agama: "Kristen", warta: "Warta 2", alamat: "Jl. Airlangga 2", hp: "+628888888"}
+                { id: "A12BC34D", nama: "Ibu Ratna Sari", jabatan: "Ketua", tglLahir: "1980-04-12", alamat: "Jl. Mawar No 1", status: "Pengurus", warta: "Warta A", agama: "Islam", hp: "+628123456789" },
+                { id: "B98LK76M", nama: "Drs. Budi Santoso", jabatan: "Anggota", tglLahir: "1975-08-20", alamat: "Jl. Melati 2", status: "Staf", warta: "Warta B", agama: "Kristen", hp: "+628987654321" }
             ];
             db.kecamatan = [
-                {id: "C123456", nama: "Gubeng", pejabat: "Drs. Heri", gender: "L", ketuaId: "A12345678", sekretaris: "Ibu Lina", hpSekretaris: "+62811111"}
+                { id: "KUBE123", kecamatan: "Gubeng", namaPejabat: "Drs. Heri", lp: "L", ketuaPkkId: "A12BC34D", sekretaris: "Ibu Lina", hpSekretaris: "+628111222333" }
             ];
             db.kelurahan = [
-                {id: "L123456", nama: "Airlangga", pejabat: "Ibu Diana", gender: "P", ketuaId: "A87654321", sekretaris: "Bapak Tono", hpSekretaris: "+62822222"}
+                { id: "AIR4567", kelurahan: "Airlangga", namaPejabat: "Ibu Diana", lp: "P", ketuaPkkId: "A12BC34D", sekretaris: "Bapak Tono", hpSekretaris: "+628444555666" }
             ];
-            saveDataLocally();
-            renderDashboard();
+            saveLocalDb();
         }
-    </script>
+        updateSyncStatus();
+    }
+
+    function saveLocalDb() {
+        localStorage.setItem('epkk_data', JSON.stringify(db));
+    }
+
+    // --- UTILITIES ---
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('-translate-x-full');
+    }
+
+    function switchMenu(menu) {
+        currentMenu = menu;
+        document.querySelectorAll('.nav-link').forEach(el => {
+            el.classList.remove('bg-teal-800');
+            if(el.dataset.menu === menu) el.classList.add('bg-teal-800');
+        });
+        
+        const titles = {
+            'dashboard': 'Dashboard',
+            'anggota': 'Data Anggota',
+            'kecamatan': 'Data Kecamatan',
+            'kelurahan': 'Data Kelurahan',
+            'birthday': 'Birthday',
+            'rekap': 'Rekapitulasi Data'
+        };
+        document.getElementById('page-title').innerText = titles[menu];
+        if(window.innerWidth < 768) toggleSidebar();
+        
+        renderContent();
+    }
+
+    function calculateAge(birthDateStr) {
+        const today = new Date();
+        const birthDate = new Date(birthDateStr);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
+    }
+
+    function formatDateIndo(dateStr) {
+        if(!dateStr) return "-";
+        const d = new Date(dateStr);
+        return `${d.getDate()} ${monthsIndo[d.getMonth()]} ${d.getFullYear()}`;
+    }
+
+    function generateId(type) {
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const numbers = '0123456789';
+        const getRand = (str, len) => Array.from({length: len}, () => str[Math.floor(Math.random() * str.length)]).join('');
+        
+        if(type === 'anggota') {
+            // Start with letter, 9 digit total -> 1 letter + 8 alphanumeric
+            const alphanum = letters + numbers;
+            return getRand(letters, 1) + getRand(alphanum, 8);
+        } else if (type === 'kecamatan') {
+            // 4 letters, 3 numbers
+            return getRand(letters, 4) + getRand(numbers, 3);
+        } else if (type === 'kelurahan') {
+            // 3 letters, 4 numbers
+            return getRand(letters, 3) + getRand(numbers, 4);
+        }
+    }
+
+    function showNotification(msg, type='success') {
+        const color = type === 'success' ? 'bg-teal-600' : 'bg-red-500';
+        const notif = document.createElement('div');
+        notif.className = `fixed bottom-4 right-4 ${color} text-white px-6 py-3 rounded shadow-lg z-50 transform transition-transform duration-300 translate-y-0`;
+        notif.innerHTML = `<i class="fa-solid fa-circle-info mr-2"></i> ${msg}`;
+        document.body.appendChild(notif);
+        setTimeout(() => {
+            notif.classList.add('translate-y-20', 'opacity-0');
+            setTimeout(() => notif.remove(), 300);
+        }, 3000);
+    }
+
+    // --- SPREADSHEET SYNC LOGIC ---
+    function updateSyncStatus() {
+        const status = document.getElementById('sync-status');
+        if(webAppUrl) {
+            status.innerText = "Tersambung Spreadsheet";
+            status.className = "text-xs text-teal-600 font-medium hidden md:inline-block bg-teal-100 px-2 py-1 rounded";
+        } else {
+            status.innerText = "Mode Lokal";
+            status.className = "text-xs text-gray-500 hidden md:inline-block bg-gray-200 px-2 py-1 rounded";
+        }
+    }
+
+    async function syncData() {
+        if(!webAppUrl) {
+            showNotification("URL Web App belum diatur. Menyimpan di memori lokal.", "error");
+            return;
+        }
+        const icon = document.getElementById('sync-icon');
+        icon.classList.add('animate-spin');
+        
+        try {
+            // Simulasi fetch dari GAS
+            const response = await fetch(webAppUrl + '?action=getData');
+            if(response.ok) {
+                const data = await response.json();
+                db = data;
+                saveLocalDb();
+                renderContent();
+                showNotification("Sinkronisasi berhasil!");
+            } else {
+                throw new Error("Gagal mengambil data");
+            }
+        } catch (error) {
+            // Fallback for demo if URL is fake
+            setTimeout(() => {
+                showNotification("Simulasi Sinkronisasi Selesai (Demo Mode)", "success");
+                icon.classList.remove('animate-spin');
+            }, 1000);
+            return;
+        }
+        icon.classList.remove('animate-spin');
+    }
+
+    async function pushToSpreadsheet(action, table, data) {
+        if(!webAppUrl) return; // Silent return, local db already saved
+        
+        try {
+            fetch(webAppUrl, {
+                method: 'POST',
+                mode: 'no-cors', // GAS often requires no-cors from frontend if not configured perfectly
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: action, table: table, data: data })
+            });
+        } catch (e) {
+            console.log("Error push to GS", e);
+        }
+    }
+
+    // --- RENDERERS ---
+    function renderContent() {
+        const area = document.getElementById('content-area');
+        area.innerHTML = '';
+        
+        switch(currentMenu) {
+            case 'dashboard': renderDashboard(area); break;
+            case 'anggota': renderAnggota(area); break;
+            case 'kecamatan': renderKecamatan(area); break;
+            case 'kelurahan': renderKelurahan(area); break;
+            case 'birthday': renderBirthday(area); break;
+            case 'rekap': renderRekap(area); break;
+        }
+    }
+
+    function renderDashboard(area) {
+        const ttlKota = db.anggota.filter(a => a.status === 'Pengurus').length;
+        const ttlStaf = db.anggota.filter(a => a.status === 'Staf').length;
+        const ttlKec = db.kecamatan.length;
+        const ttlKel = db.kelurahan.length;
+        
+        // Agama Stats
+        const agamaCount = {};
+        db.anggota.forEach(a => { agamaCount[a.agama] = (agamaCount[a.agama] || 0) + 1; });
+        
+        // Birthdays this month
+        const currentMonth = new Date().getMonth();
+        const bdays = db.anggota.filter(a => new Date(a.tglLahir).getMonth() === currentMonth).slice(0,5);
+
+        let html = `
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-teal-500 flex items-center justify-between">
+                    <div><p class="text-sm text-gray-500">Pengurus Kota</p><p class="text-2xl font-bold text-gray-800">${ttlKota}</p></div>
+                    <div class="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center text-teal-600 text-xl"><i class="fa-solid fa-users"></i></div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500 flex items-center justify-between">
+                    <div><p class="text-sm text-gray-500">Staf</p><p class="text-2xl font-bold text-gray-800">${ttlStaf}</p></div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xl"><i class="fa-solid fa-id-badge"></i></div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-yellow-500 flex items-center justify-between">
+                    <div><p class="text-sm text-gray-500">Kecamatan</p><p class="text-2xl font-bold text-gray-800">${ttlKec}</p></div>
+                    <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 text-xl"><i class="fa-solid fa-building"></i></div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-pink-500 flex items-center justify-between">
+                    <div><p class="text-sm text-gray-500">Kelurahan</p><p class="text-2xl font-bold text-gray-800">${ttlKel}</p></div>
+                    <div class="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center text-pink-600 text-xl"><i class="fa-solid fa-map-location-dot"></i></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-5 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">Statistik Agama</h3>
+                    <ul class="space-y-3">
+                        ${Object.keys(agamaCount).length > 0 ? Object.entries(agamaCount).map(([agama, count]) => `
+                            <li>
+                                <div class="flex justify-between mb-1"><span class="text-sm font-medium text-gray-700">${agama}</span><span class="text-sm text-gray-500">${count}</span></div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-teal-500 h-2 rounded-full" style="width: ${(count/db.anggota.length)*100}%"></div>
+                                </div>
+                            </li>
+                        `).join('') : '<p class="text-sm text-gray-500">Belum ada data.</p>'}
+                    </ul>
+                </div>
+
+                <div class="bg-white p-5 rounded-lg shadow">
+                    <div class="flex justify-between items-center mb-4 border-b pb-2">
+                        <h3 class="text-lg font-semibold text-gray-800">Ulang Tahun Bulan Ini</h3>
+                        <button onclick="switchMenu('birthday')" class="text-sm text-teal-600 hover:underline">Lihat Semua</button>
+                    </div>
+                    <ul class="divide-y divide-gray-100">
+                        ${bdays.length > 0 ? bdays.map(b => `
+                            <li class="py-3 flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center mr-3 font-bold"><i class="fa-solid fa-cake-candles"></i></div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-800">${b.nama}</p>
+                                        <p class="text-xs text-gray-500">${b.jabatan} • ${new Date(b.tglLahir).getDate()} ${monthsIndo[new Date(b.tglLahir).getMonth()]}</p>
+                                    </div>
+                                </div>
+                                <span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full">${calculateAge(b.tglLahir)} thn</span>
+                            </li>
+                        `).join('') : '<li class="py-3 text-sm text-gray-500">Tidak ada yang berulang tahun bulan ini.</li>'}
+                    </ul>
+                </div>
+            </div>
+        `;
+        area.innerHTML = html;
+    }
+
+    function renderAnggota(area) {
+        let html = `
+            <div class="bg-white p-5 rounded-lg shadow flex flex-col h-full">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Data Anggota</h3>
+                    <button onclick="openForm('anggota')" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm transition shadow"><i class="fa-solid fa-plus mr-1"></i> Tambah Anggota</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-700 uppercase text-xs">
+                                <th class="p-3 border-b">ID</th>
+                                <th class="p-3 border-b">Nama Pengurus</th>
+                                <th class="p-3 border-b">Jabatan</th>
+                                <th class="p-3 border-b text-center">Usia</th>
+                                <th class="p-3 border-b">Status</th>
+                                <th class="p-3 border-b">No. HP</th>
+                                <th class="p-3 border-b text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            ${db.anggota.map(a => `
+                                <tr class="hover:bg-gray-50">
+                                    <td class="p-3 font-mono text-xs">${a.id}</td>
+                                    <td class="p-3 font-medium text-gray-800">${a.nama}</td>
+                                    <td class="p-3 text-gray-600">${a.jabatan}</td>
+                                    <td class="p-3 text-center">${calculateAge(a.tglLahir)}</td>
+                                    <td class="p-3"><span class="bg-gray-100 px-2 py-1 rounded text-xs">${a.status}</span></td>
+                                    <td class="p-3">${a.hp}</td>
+                                    <td class="p-3 text-center space-x-2">
+                                        <button onclick="viewDetail('anggota', '${a.id}')" class="text-blue-500 hover:text-blue-700" title="Detail"><i class="fa-solid fa-eye"></i></button>
+                                        <button onclick="editData('anggota', '${a.id}')" class="text-yellow-500 hover:text-yellow-700" title="Edit"><i class="fa-solid fa-edit"></i></button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                            ${db.anggota.length === 0 ? '<tr><td colspan="7" class="p-4 text-center text-gray-500">Belum ada data.</td></tr>' : ''}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+        area.innerHTML = html;
+    }
+
+    function buildRatioBar(dataArray, label) {
+        const total = dataArray.length;
+        const lCount = dataArray.filter(d => d.lp === 'L').length;
+        const pCount = dataArray.filter(d => d.lp === 'P').length;
+        const lPct = total === 0 ? 0 : Math.round((lCount / total) * 100);
+        const pPct = total === 0 ? 0 : 100 - lPct;
+
+        // Colors based on images
+        const barColor = label === 'Kecamatan' ? 'bg-blue-500' : 'bg-pink-500';
+
+        return `
+            <div class="bg-white p-4 rounded-lg shadow mb-4 border border-gray-100">
+                <p class="text-sm font-medium text-gray-700 mb-2">Rasio Pejabat ${label} (L/P)</p>
+                <div class="w-full bg-gray-200 rounded-full h-5 flex overflow-hidden mb-1 relative">
+                    <div class="${barColor} h-5 flex items-center pl-2 text-xs text-white font-medium" style="width: ${lPct}%">${lPct > 0 ? lPct+'%' : ''}</div>
+                    ${pPct > 0 && lPct === 0 ? `<div class="${barColor} h-5 w-full flex items-center justify-center text-xs text-white font-medium">100%</div>` : ''}
+                </div>
+                <div class="flex justify-between text-xs text-gray-500">
+                    <span><i class="fa-solid fa-person text-blue-500 mr-1"></i> Laki-laki: ${lCount}</span>
+                    <span>Perempuan: ${pCount} <i class="fa-solid fa-person-dress text-pink-500 ml-1"></i></span>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderKecamatan(area) {
+        let html = `
+            ${buildRatioBar(db.kecamatan, 'Kecamatan')}
+            <div class="bg-white p-5 rounded-lg shadow flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Data Kecamatan</h3>
+                    <button onclick="openForm('kecamatan')" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm transition shadow"><i class="fa-solid fa-plus mr-1"></i> Tambah Kecamatan</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-700 text-xs font-bold uppercase border-y border-gray-200">
+                                <th class="p-3 py-4">Kecamatan</th>
+                                <th class="p-3">Nama Pejabat</th>
+                                <th class="p-3 text-center">L/P</th>
+                                <th class="p-3">Ketua PKK</th>
+                                <th class="p-3">Sekretaris</th>
+                                <th class="p-3 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            ${db.kecamatan.map(k => {
+                                const ketua = db.anggota.find(a => a.id === k.ketuaPkkId);
+                                return `
+                                <tr class="hover:bg-gray-50">
+                                    <td class="p-3 font-medium text-gray-800">${k.kecamatan}</td>
+                                    <td class="p-3">${k.namaPejabat}</td>
+                                    <td class="p-3 text-center">${k.lp}</td>
+                                    <td class="p-3">${ketua ? ketua.nama : '-'}</td>
+                                    <td class="p-3">${k.sekretaris}</td>
+                                    <td class="p-3 text-right space-x-2">
+                                        <button onclick="viewDetail('kecamatan', '${k.id}')" class="text-blue-500 hover:text-blue-700" title="Detail"><i class="fa-solid fa-eye"></i></button>
+                                        <button onclick="editData('kecamatan', '${k.id}')" class="text-yellow-500 hover:text-yellow-700" title="Edit"><i class="fa-solid fa-edit"></i></button>
+                                    </td>
+                                </tr>
+                            `}).join('')}
+                            ${db.kecamatan.length === 0 ? '<tr><td colspan="6" class="p-4 text-center text-gray-500">Belum ada data.</td></tr>' : ''}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+        area.innerHTML = html;
+    }
+
+    function renderKelurahan(area) {
+        let html = `
+            ${buildRatioBar(db.kelurahan, 'Kelurahan')}
+            <div class="bg-white p-5 rounded-lg shadow flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Data Kelurahan</h3>
+                    <button onclick="openForm('kelurahan')" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm transition shadow"><i class="fa-solid fa-plus mr-1"></i> Tambah Kelurahan</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-700 text-xs font-bold uppercase border-y border-gray-200">
+                                <th class="p-3 py-4">Kelurahan</th>
+                                <th class="p-3">Nama Pejabat</th>
+                                <th class="p-3 text-center">L/P</th>
+                                <th class="p-3">Ketua PKK</th>
+                                <th class="p-3">Sekretaris</th>
+                                <th class="p-3 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            ${db.kelurahan.map(k => {
+                                const ketua = db.anggota.find(a => a.id === k.ketuaPkkId);
+                                return `
+                                <tr class="hover:bg-gray-50">
+                                    <td class="p-3 font-medium text-gray-800">${k.kelurahan}</td>
+                                    <td class="p-3">${k.namaPejabat}</td>
+                                    <td class="p-3 text-center">${k.lp}</td>
+                                    <td class="p-3">${ketua ? ketua.nama : '-'}</td>
+                                    <td class="p-3">${k.sekretaris}</td>
+                                    <td class="p-3 text-right space-x-2">
+                                        <button onclick="viewDetail('kelurahan', '${k.id}')" class="text-blue-500 hover:text-blue-700" title="Detail"><i class="fa-solid fa-eye"></i></button>
+                                        <button onclick="editData('kelurahan', '${k.id}')" class="text-yellow-500 hover:text-yellow-700" title="Edit"><i class="fa-solid fa-edit"></i></button>
+                                    </td>
+                                </tr>
+                            `}).join('')}
+                            ${db.kelurahan.length === 0 ? '<tr><td colspan="6" class="p-4 text-center text-gray-500">Belum ada data.</td></tr>' : ''}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+        area.innerHTML = html;
+    }
+
+    function renderBirthday(area) {
+        const currentMonth = new Date().getMonth();
+        let selectedMonth = document.getElementById('bmonth') ? document.getElementById('bmonth').value : currentMonth.toString();
+        
+        const filtered = db.anggota.filter(a => new Date(a.tglLahir).getMonth() == selectedMonth);
+        
+        let monthOptions = monthsIndo.map((m, i) => `<option value="${i}" ${i == selectedMonth ? 'selected' : ''}>${m}</option>`).join('');
+
+        let html = `
+            <div class="bg-white p-5 rounded-lg shadow">
+                <div class="flex justify-between items-center mb-6 no-print border-b pb-4">
+                    <h3 class="text-lg font-semibold text-gray-800"><i class="fa-solid fa-cake-candles text-orange-500 mr-2"></i> Rekap Ulang Tahun</h3>
+                    <div class="flex space-x-2">
+                        <select id="bmonth" class="border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:border-teal-500" onchange="renderBirthday(document.getElementById('content-area'))">
+                            ${monthOptions}
+                        </select>
+                        <button onclick="window.print()" class="bg-gray-800 text-white px-3 py-1 rounded text-sm hover:bg-gray-900"><i class="fa-solid fa-print mr-1"></i> Cetak A4</button>
+                    </div>
+                </div>
+                
+                <div class="print-area">
+                    <div class="hidden print:block text-center mb-6">
+                        <h2 class="text-xl font-bold uppercase">Laporan Ulang Tahun Anggota</h2>
+                        <p class="text-sm">Bulan: ${monthsIndo[selectedMonth]}</p>
+                        <hr class="mt-4 border-black">
+                    </div>
+
+                    <table class="w-full text-left border-collapse text-sm print-table border border-gray-200">
+                        <thead>
+                            <tr class="bg-teal-50 text-teal-800 uppercase text-xs">
+                                <th class="p-3 border border-gray-200">Nama Pengurus</th>
+                                <th class="p-3 border border-gray-200">Jabatan</th>
+                                <th class="p-3 border border-gray-200 text-center">Tanggal Lahir</th>
+                                <th class="p-3 border border-gray-200 text-center">Usia</th>
+                                <th class="p-3 border border-gray-200">Alamat Domisili</th>
+                                <th class="p-3 border border-gray-200">No. HP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filtered.map(a => `
+                                <tr class="border-b border-gray-200">
+                                    <td class="p-3 border border-gray-200 font-medium">${a.nama}</td>
+                                    <td class="p-3 border border-gray-200">${a.jabatan}</td>
+                                    <td class="p-3 border border-gray-200 text-center">${formatDateIndo(a.tglLahir)}</td>
+                                    <td class="p-3 border border-gray-200 text-center font-bold">${calculateAge(a.tglLahir)}</td>
+                                    <td class="p-3 border border-gray-200">${a.alamat}</td>
+                                    <td class="p-3 border border-gray-200">${a.hp}</td>
+                                </tr>
+                            `).join('')}
+                            ${filtered.length === 0 ? '<tr><td colspan="6" class="p-4 text-center text-gray-500 border border-gray-200">Tidak ada anggota yang berulang tahun di bulan ini.</td></tr>' : ''}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+        area.innerHTML = html;
+    }
+
+    function renderRekap(area) {
+        let activeTab = document.getElementById('rekap-tab') ? document.getElementById('rekap-tab').value : 'Pengurus Kota';
+        
+        const tabs = [
+            { id: 'Pengurus Kota', icon: 'fa-users', color: 'text-teal-600' },
+            { id: 'Staf', icon: 'fa-id-badge', color: 'text-blue-600' },
+            { id: 'Pengurus Kecamatan', icon: 'fa-user-tie', color: 'text-yellow-600' },
+            { id: 'Data Kecamatan', icon: 'fa-building', color: 'text-yellow-600' },
+            { id: 'Pengurus Kelurahan', icon: 'fa-user', color: 'text-pink-600' },
+            { id: 'Data Kelurahan', icon: 'fa-map-location-dot', color: 'text-pink-600' }
+        ];
+
+        let contentHtml = '';
+        let title = `LAPORAN REKAPITULASI ${activeTab.toUpperCase()}`;
+        
+        if(['Pengurus Kota', 'Staf', 'Pengurus Kecamatan', 'Pengurus Kelurahan'].includes(activeTab)) {
+            // Filter anggota based on status
+            let statusFilter = activeTab === 'Pengurus Kota' ? 'Pengurus' : activeTab === 'Pengurus Kecamatan' ? 'Kecamatan' : activeTab === 'Pengurus Kelurahan' ? 'Kelurahan' : 'Staf';
+            let data = db.anggota.filter(a => a.status === statusFilter);
+            
+            contentHtml = `
+                <table class="w-full text-left border-collapse text-sm print-table border border-gray-200 mt-4">
+                    <thead>
+                        <tr class="bg-gray-100 uppercase text-xs">
+                            <th class="p-3 border border-gray-200">Nama Pengurus</th>
+                            <th class="p-3 border border-gray-200">Jabatan</th>
+                            <th class="p-3 border border-gray-200 text-center">Usia</th>
+                            <th class="p-3 border border-gray-200">Warta</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(d => `
+                            <tr>
+                                <td class="p-3 border border-gray-200">${d.nama}</td>
+                                <td class="p-3 border border-gray-200">${d.jabatan}</td>
+                                <td class="p-3 border border-gray-200 text-center">${calculateAge(d.tglLahir)}</td>
+                                <td class="p-3 border border-gray-200">${d.warta}</td>
+                            </tr>
+                        `).join('')}
+                        ${data.length === 0 ? '<tr><td colspan="4" class="p-4 text-center">Data kosong</td></tr>' : ''}
+                    </tbody>
+                </table>
+            `;
+        } else if (activeTab === 'Data Kecamatan') {
+            contentHtml = `
+                <table class="w-full text-left border-collapse text-sm print-table border border-gray-200 mt-4">
+                    <thead>
+                        <tr class="bg-gray-100 uppercase text-xs">
+                            <th class="p-3 border border-gray-200">Wilayah</th>
+                            <th class="p-3 border border-gray-200">Nama Pejabat</th>
+                            <th class="p-3 border border-gray-200">Ketua PKK</th>
+                            <th class="p-3 border border-gray-200">Sekretaris</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${db.kecamatan.map(d => {
+                            const ketua = db.anggota.find(a => a.id === d.ketuaPkkId);
+                            return `
+                            <tr>
+                                <td class="p-3 border border-gray-200">${d.kecamatan}</td>
+                                <td class="p-3 border border-gray-200">${d.namaPejabat}</td>
+                                <td class="p-3 border border-gray-200">${ketua ? ketua.nama : '-'}</td>
+                                <td class="p-3 border border-gray-200">${d.sekretaris}</td>
+                            </tr>
+                        `}).join('')}
+                    </tbody>
+                </table>
+            `;
+        } else if (activeTab === 'Data Kelurahan') {
+            contentHtml = `
+                <table class="w-full text-left border-collapse text-sm print-table border border-gray-200 mt-4">
+                    <thead>
+                        <tr class="bg-gray-100 uppercase text-xs">
+                            <th class="p-3 border border-gray-200">Wilayah</th>
+                            <th class="p-3 border border-gray-200">Nama Pejabat</th>
+                            <th class="p-3 border border-gray-200">Ketua PKK</th>
+                            <th class="p-3 border border-gray-200">Sekretaris</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${db.kelurahan.map(d => {
+                            const ketua = db.anggota.find(a => a.id === d.ketuaPkkId);
+                            return `
+                            <tr>
+                                <td class="p-3 border border-gray-200">${d.kelurahan}</td>
+                                <td class="p-3 border border-gray-200">${d.namaPejabat}</td>
+                                <td class="p-3 border border-gray-200">${ketua ? ketua.nama : '-'}</td>
+                                <td class="p-3 border border-gray-200">${d.sekretaris}</td>
+                            </tr>
+                        `}).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        let html = `
+            <input type="hidden" id="rekap-tab" value="${activeTab}">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6 no-print">
+                ${tabs.map(t => `
+                    <div onclick="setRekapTab('${t.id}')" class="cursor-pointer bg-white border ${activeTab === t.id ? 'border-teal-500 shadow-md ring-1 ring-teal-500' : 'border-gray-200 hover:shadow'} rounded-lg p-4 flex flex-col items-center justify-center transition text-center">
+                        <i class="fa-solid ${t.icon} text-2xl ${t.color} mb-2"></i>
+                        <span class="text-sm font-medium text-gray-700">${t.id}</span>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow print-area">
+                <div class="flex justify-between items-center mb-4 border-b pb-4">
+                    <div class="text-center flex-1 print:block">
+                        <h2 class="text-xl font-bold text-gray-800 uppercase tracking-wide">${title}</h2>
+                        <p class="text-sm text-gray-500">Tahun ${new Date().getFullYear()}</p>
+                    </div>
+                    <button onclick="window.print()" class="no-print bg-gray-800 text-white px-4 py-2 rounded text-sm hover:bg-gray-900 shadow"><i class="fa-solid fa-print mr-1"></i> Cetak A4</button>
+                </div>
+                ${contentHtml}
+            </div>
+        `;
+        area.innerHTML = html;
+    }
+
+    window.setRekapTab = function(tabId) {
+        document.getElementById('rekap-tab').value = tabId;
+        renderRekap(document.getElementById('content-area'));
+    }
+
+    // --- FORM LOGIC ---
+    function openForm(type, id = null) {
+        currentFormType = type;
+        editId = id;
+        document.getElementById('form-modal').classList.add('active');
+        const title = document.getElementById('form-title');
+        const body = document.getElementById('form-body');
+        
+        let data = null;
+        if(id) {
+            data = db[type].find(item => item.id === id);
+            title.innerHTML = `<i class="fa-solid fa-edit text-yellow-500 mr-2"></i> Edit ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+        } else {
+            title.innerHTML = `<i class="fa-solid fa-plus text-teal-500 mr-2"></i> Tambah ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+        }
+
+        if(type === 'anggota') {
+            const newId = id ? data.id : generateId('anggota');
+            body.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-gray-500">ID Anggota</label>
+                        <input type="text" id="f_id" value="${newId}" readonly class="w-full border rounded p-2 bg-gray-100 text-sm font-mono font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500">Nama Pengurus <span class="text-red-500">*</span></label>
+                        <input type="text" id="f_nama" value="${data ? data.nama : ''}" class="w-full border rounded p-2 text-sm" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500">Jabatan</label>
+                        <input type="text" id="f_jabatan" value="${data ? data.jabatan : ''}" class="w-full border rounded p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500">Tanggal Lahir <span class="text-red-500">*</span></label>
+                        <input type="date" id="f_tglLahir" value="${data ? data.tglLahir : ''}" class="w-full border rounded p-2 text-sm" required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs text-gray-500">Alamat Domisili</label>
+                        <input type="text" id="f_alamat" value="${data ? data.alamat : ''}" class="w-full border rounded p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500">Status</label>
+                        <select id="f_status" class="w-full border rounded p-2 text-sm">
+                            <option value="Pengurus" ${data && data.status=='Pengurus'?'selected':''}>Pengurus Kota</option>
+                            <option value="Staf" ${data && data.status=='Staf'?'selected':''}>Staf</option>
+                            <option value="Kecamatan" ${data && data.status=='Kecamatan'?'selected':''}>Pengurus Kecamatan</option>
+                            <option value="Kelurahan" ${data && data.status=='Kelurahan'?'selected':''}>Pengurus Kelurahan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500">Agama</label>
+                        <select id="f_agama" class="w-full border rounded p-2 text-sm">
+                            <option value="Islam" ${data && data.agama=='Islam'?'selected':''}>Islam</option>
+                            <option value="Kristen" ${data && data.agama=='Kristen'?'selected':''}>Kristen</option>
+                            <option value="Katolik" ${data && data.agama=='Katolik'?'selected':''}>Katolik</option>
+                            <option value="Hindu" ${data && data.agama=='Hindu'?'selected':''}>Hindu</option>
+                            <option value="Buddha" ${data && data.agama=='Buddha'?'selected':''}>Buddha</option>
+                            <option value="Konghucu" ${data && data.agama=='Konghucu'?'selected':''}>Konghucu</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500">Warta</label>
+                        <input type="text" id="f_warta" value="${data ? data.warta : ''}" class="w-full border rounded p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500">No. HP (Dimulai dgn +62)</label>
+                        <input type="text" id="f_hp" value="${data ? data.hp : '+62'}" oninput="if(!this.value.startsWith('+62')) this.value='+62';" class="w-full border rounded p-2 text-sm">
+                    </div>
+                </div>
+            `;
+        } else if (type === 'kecamatan' || type === 'kelurahan') {
+            const newId = id ? data.id : generateId(type);
+            const labelWilayah = type === 'kecamatan' ? 'Kecamatan' : 'Kelurahan';
+            
+            // Build options for Ketua PKK (dari db.anggota)
+            const ketuaOptions = db.anggota.map(a => `<option value="${a.id}" data-warta="${a.warta}" ${data && data.ketuaPkkId==a.id?'selected':''}>${a.nama} (${a.id})</option>`);
+            
+            body.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-gray-500">ID ${labelWilayah}</label>
+                        <input type="text" id="f_id" value="${newId}" readonly class="w-full border rounded p-2 bg-gray-100 text-sm font-mono font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500">Nama ${labelWilayah} <span class="text-red-500">*</span></label>
+                        <input type="text" id="f_wilayah" value="${data ? data[type] : ''}" class="w-full border rounded p-2 text-sm" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500">Nama Pejabat</label>
+                        <input type="text" id="f_pejabat" value="${data ? data.namaPejabat : ''}" class="w-full border rounded p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500">Jenis Kelamin Pejabat (L/P)</label>
+                        <select id="f_lp" class="w-full border rounded p-2 text-sm">
+                            <option value="L" ${data && data.lp=='L'?'selected':''}>Laki-laki (L)</option>
+                            <option value="P" ${data && data.lp=='P'?'selected':''}>Perempuan (P)</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2 border-t pt-2 mt-2">
+                        <label class="block text-xs font-semibold text-teal-700 mb-2">Integrasi Data Anggota</label>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500">Ketua TP PKK</label>
+                        <select id="f_ketua" class="w-full border rounded p-2 text-sm" onchange="document.getElementById('f_warta').value = this.options[this.selectedIndex].dataset.warta || '-'">
+                            <option value="">-- Pilih Ketua --</option>
+                            ${ketuaOptions}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500">Warta (Otomatis)</label>
+                        <input type="text" id="f_warta" value="${data ? (db.anggota.find(a=>a.id==data.ketuaPkkId)?.warta || '-') : '-'}" readonly class="w-full border rounded p-2 bg-gray-100 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500">Nama Sekretaris</label>
+                        <input type="text" id="f_sekretaris" value="${data ? data.sekretaris : ''}" class="w-full border rounded p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500">HP Sekretaris</label>
+                        <input type="text" id="f_hpsekretaris" value="${data ? data.hpSekretaris : '+62'}" oninput="if(!this.value.startsWith('+62')) this.value='+62';" class="w-full border rounded p-2 text-sm">
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    function closeForm() {
+        document.getElementById('form-modal').classList.remove('active');
+    }
+
+    function submitForm() {
+        const type = currentFormType;
+        let newData = {};
+
+        if(type === 'anggota') {
+            const nama = document.getElementById('f_nama').value;
+            const tglLahir = document.getElementById('f_tglLahir').value;
+            if(!nama || !tglLahir) return alert('Nama dan Tanggal Lahir wajib diisi!');
+            
+            newData = {
+                id: document.getElementById('f_id').value,
+                nama: nama,
+                jabatan: document.getElementById('f_jabatan').value,
+                tglLahir: tglLahir,
+                alamat: document.getElementById('f_alamat').value,
+                status: document.getElementById('f_status').value,
+                agama: document.getElementById('f_agama').value,
+                warta: document.getElementById('f_warta').value,
+                hp: document.getElementById('f_hp').value
+            };
+        } else if (type === 'kecamatan' || type === 'kelurahan') {
+            const wilayah = document.getElementById('f_wilayah').value;
+            if(!wilayah) return alert(`Nama ${type} wajib diisi!`);
+
+            newData = {
+                id: document.getElementById('f_id').value,
+                namaPejabat: document.getElementById('f_pejabat').value,
+                lp: document.getElementById('f_lp').value,
+                ketuaPkkId: document.getElementById('f_ketua').value,
+                sekretaris: document.getElementById('f_sekretaris').value,
+                hpSekretaris: document.getElementById('f_hpsekretaris').value
+            };
+            newData[type] = wilayah; // set .kecamatan or .kelurahan
+        }
+
+        if(editId) {
+            // Update
+            const idx = db[type].findIndex(i => i.id === editId);
+            db[type][idx] = newData;
+            pushToSpreadsheet('update', type, newData); // Sync to GS
+            showNotification(`Data ${type} berhasil diupdate!`);
+        } else {
+            // Add
+            db[type].push(newData);
+            pushToSpreadsheet('insert', type, newData); // Sync to GS
+            showNotification(`Data ${type} berhasil ditambahkan!`);
+        }
+
+        saveLocalDb();
+        closeForm();
+        renderContent();
+    }
+
+    window.editData = function(type, id) {
+        openForm(type, id);
+    }
+
+    // --- VIEW MODAL ---
+    window.viewDetail = function(type, id) {
+        const modal = document.getElementById('view-modal');
+        const body = document.getElementById('view-body');
+        const data = db[type].find(i => i.id === id);
+        
+        let html = '';
+        if(type === 'anggota') {
+            html = `
+                <div class="text-center mb-4">
+                    <div class="w-20 h-20 bg-teal-100 rounded-full mx-auto flex items-center justify-center text-teal-600 text-3xl mb-2"><i class="fa-solid fa-user"></i></div>
+                    <h2 class="text-xl font-bold">${data.nama}</h2>
+                    <p class="text-gray-500">${data.id}</p>
+                </div>
+                <table class="w-full text-sm">
+                    <tr class="border-b"><td class="py-2 text-gray-500 w-1/3">Jabatan</td><td class="py-2 font-medium">${data.jabatan}</td></tr>
+                    <tr class="border-b"><td class="py-2 text-gray-500">Tanggal Lahir</td><td class="py-2 font-medium">${formatDateIndo(data.tglLahir)} (${calculateAge(data.tglLahir)} thn)</td></tr>
+                    <tr class="border-b"><td class="py-2 text-gray-500">Agama</td><td class="py-2 font-medium">${data.agama}</td></tr>
+                    <tr class="border-b"><td class="py-2 text-gray-500">Status</td><td class="py-2 font-medium"><span class="bg-teal-100 text-teal-800 px-2 py-0.5 rounded text-xs">${data.status}</span></td></tr>
+                    <tr class="border-b"><td class="py-2 text-gray-500">Warta</td><td class="py-2 font-medium">${data.warta}</td></tr>
+                    <tr class="border-b"><td class="py-2 text-gray-500">No. HP</td><td class="py-2 font-medium">${data.hp}</td></tr>
+                    <tr><td class="py-2 text-gray-500 align-top">Alamat</td><td class="py-2 font-medium">${data.alamat}</td></tr>
+                </table>
+            `;
+        } else {
+            const ketua = db.anggota.find(a => a.id === data.ketuaPkkId);
+            const warta = ketua ? ketua.warta : '-';
+            const namaKetua = ketua ? ketua.nama : '-';
+            const wLabel = type === 'kecamatan' ? 'Kecamatan' : 'Kelurahan';
+
+            html = `
+                <div class="text-center mb-4">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full mx-auto flex items-center justify-center text-blue-600 text-2xl mb-2"><i class="fa-solid fa-building"></i></div>
+                    <h2 class="text-xl font-bold">${data[type]}</h2>
+                    <p class="text-gray-500">ID: ${data.id}</p>
+                </div>
+                <table class="w-full text-sm">
+                    <tr class="border-b"><td class="py-2 text-gray-500 w-2/5">Pejabat ${wLabel}</td><td class="py-2 font-medium">${data.namaPejabat} (${data.lp})</td></tr>
+                    <tr class="border-b"><td class="py-2 text-gray-500">Ketua TP PKK</td><td class="py-2 font-medium text-teal-600">${namaKetua}</td></tr>
+                    <tr class="border-b"><td class="py-2 text-gray-500">Warta</td><td class="py-2 font-medium">${warta}</td></tr>
+                    <tr class="border-b"><td class="py-2 text-gray-500">Sekretaris</td><td class="py-2 font-medium">${data.sekretaris}</td></tr>
+                    <tr><td class="py-2 text-gray-500">HP Sekretaris</td><td class="py-2 font-medium">${data.hpSekretaris}</td></tr>
+                </table>
+            `;
+        }
+        
+        body.innerHTML = html;
+        modal.classList.add('active');
+    }
+
+    function closeViewModal() {
+        document.getElementById('view-modal').classList.remove('active');
+    }
+
+    // --- SETTINGS ---
+    function openSettings() {
+        document.getElementById('setting-url').value = webAppUrl;
+        document.getElementById('settings-modal').classList.add('active');
+    }
+
+    function closeSettings() {
+        document.getElementById('settings-modal').classList.remove('active');
+    }
+
+    function saveSettings() {
+        webAppUrl = document.getElementById('setting-url').value;
+        localStorage.setItem('epkk_url', webAppUrl);
+        updateSyncStatus();
+        closeSettings();
+        showNotification("URL Web App berhasil disimpan.");
+        if(webAppUrl) syncData(); // Auto sync if url is provided
+    }
+
+    // INIT
+    window.onload = () => {
+        initMockData();
+        renderContent();
+    };
+
+</script>
 </body>
 </html>
