@@ -66,7 +66,7 @@
                 <h2 id="page-title" class="text-xl font-semibold text-gray-800">Dashboard</h2>
             </div>
             <div class="flex items-center space-x-4 text-gray-500">
-                <button onclick="syncData()" class="hover:text-emerald-600 transition" title="Sinkronisasi ke Spreadsheet">
+                <button onclick="syncData()" class="hover:text-emerald-600 transition" title="Tarik Data dari Spreadsheet">
                     <i class="fas fa-sync-alt" id="sync-icon"></i>
                 </button>
                 <button onclick="openModal('modal-settings')" class="hover:text-emerald-600 transition" title="Pengaturan Sistem">
@@ -625,37 +625,76 @@
             renderDashboard(); // refresh stats
         }
 
+        // Mengambil data dari Spreadsheet (PULL)
         async function syncData() {
             const icon = document.getElementById('sync-icon');
+            
+            if(!db.settings.sheetUrl) {
+                showToast("URL Spreadsheet belum diatur.");
+                return;
+            }
+
             icon.classList.add('animate-spin');
             
-            // Mocking Sync to Google Sheet App Script
-            if(db.settings.sheetUrl) {
-                try {
-                    // Dalam implementasi nyata, gunakan method POST untuk simpan, GET untuk ambil
-                    // await fetch(db.settings.sheetUrl, { method: 'POST', body: JSON.stringify(db) });
-                    setTimeout(() => {
-                        icon.classList.remove('animate-spin');
-                        showToast("Sinkronisasi Berhasil (Mock)");
-                    }, 1000);
-                } catch(e) {
-                    icon.classList.remove('animate-spin');
-                    alert("Gagal koneksi ke Spreadsheet.");
+            try {
+                // Fetch method menggunakan GET dan parameter action=read
+                const response = await fetch(db.settings.sheetUrl + "?action=read");
+                const result = await response.json();
+                
+                if(result && result.status === 'success') {
+                    db.anggota = result.data.anggota || [];
+                    db.kecamatan = result.data.kecamatan || [];
+                    db.kelurahan = result.data.kelurahan || [];
+                    
+                    saveDataLocally();
+                    
+                    // Refresh view yang sedang aktif
+                    document.querySelectorAll('.nav-link').forEach(el => {
+                        if(el.classList.contains('bg-emerald-900')) {
+                            switchView(el.dataset.target);
+                        }
+                    });
+                    showToast("Sinkronisasi: Data ditarik dari Spreadsheet");
+                } else {
+                    showToast("Gagal: Respons dari Spreadsheet tidak valid");
                 }
-            } else {
-                setTimeout(() => {
-                    icon.classList.remove('animate-spin');
-                    showToast("Tersimpan di Penyimpanan Lokal. Atur URL untuk Sinkronisasi Sheet.");
-                }, 800);
+            } catch(e) {
+                console.error(e);
+                showToast("Gagal koneksi ke Spreadsheet.");
+            } finally {
+                icon.classList.remove('animate-spin');
             }
-            saveDataLocally();
         }
 
+        // Mendorong data baru ke Spreadsheet (PUSH) saat di-save
+        async function pushData() {
+            if(!db.settings.sheetUrl) return;
+            try {
+                await fetch(db.settings.sheetUrl, { 
+                    method: 'POST', 
+                    body: JSON.stringify({
+                        anggota: db.anggota,
+                        kecamatan: db.kecamatan,
+                        kelurahan: db.kelurahan
+                    }) 
+                });
+            } catch(e) {
+                console.error("Gagal push ke Spreadsheet", e);
+            }
+        }
+
+        // Simpan URL pengaturan dan otomatis tarik data
         function saveSettings() {
             db.settings.sheetUrl = document.getElementById('setting-url').value;
             saveDataLocally();
             closeModal('modal-settings');
-            showToast("Pengaturan Disimpan");
+            
+            if(db.settings.sheetUrl) {
+                showToast("Pengaturan Disimpan. Sedang menarik data...");
+                syncData(); // Otomatis trigger tarik data dari sheet
+            } else {
+                showToast("Pengaturan Disimpan (Mode Lokal)");
+            }
         }
 
         // --- DASHBOARD LOGIC ---
@@ -693,7 +732,14 @@
             document.getElementById('dash-agama-list').innerHTML = agamaHtml || '<p class="text-xs text-gray-400">Belum ada data</p>';
 
             // Birthday limit 5
-            const birthdays = db.anggota.filter(a => new Date(a.tgl).getMonth() + 1 === curMonth).slice(0, 5);
+            const birthdays = db.anggota.filter(a => {
+                const dateParts = a.tgl ? a.tgl.split('-') : []; // format YYYY-MM-DD
+                if(dateParts.length > 1) {
+                    return parseInt(dateParts[1]) === curMonth;
+                }
+                return false;
+            }).slice(0, 5);
+
             let bdayHtml = '';
             birthdays.forEach(b => {
                 bdayHtml += `<tr class="border-b"><td class="px-4 py-2 font-medium">${b.nama}</td><td class="px-4 py-2 text-gray-500">${b.jabatan}</td><td class="px-4 py-2 text-gray-500">${formatDateSheet(b.tgl)}</td><td class="px-4 py-2 font-bold text-pink-600">${b.usia}</td></tr>`;
@@ -772,7 +818,7 @@
                 if(idx > -1) db.anggota[idx] = data;
             }
 
-            syncData(); // Auto sync
+            pushData(); // Push secara senyap ke spreadsheet
             closeModal('modal-anggota');
             renderAnggota();
             showToast('Data Anggota Tersimpan');
@@ -798,7 +844,6 @@
         }
 
         function getKetuaOptions(type) {
-            // Filter anggota yg statusnya Kecamatan / Kelurahan sesuai type
             let opts = `<option value="">-- Pilih Ketua TP PKK --</option>`;
             db.anggota.forEach(a => {
                 opts += `<option value="${a.id}">${a.nama} - ${a.id}</option>`;
@@ -904,7 +949,7 @@
                 if(idx > -1) db.kecamatan[idx] = data;
             }
 
-            syncData();
+            pushData(); // Push ke sheet
             closeModal('modal-kecamatan');
             renderKecamatan();
             showToast('Data Kecamatan Tersimpan');
@@ -962,8 +1007,6 @@
             let barHtml = '';
             if(total === 0) barHtml = '<div class="ratio-bar-fill w-full bg-gray-300 text-gray-500">0%</div>';
             else {
-                // Per image request, put pink first for visual consistency or map logically. 
-                // Image 1 (Kelurahan) shows 100% Perempuan as Pink.
                 if(countP > 0) barHtml += `<div class="ratio-bar-fill ratio-pink" style="width: ${pP}%">${pP}%</div>`;
                 if(countL > 0) barHtml += `<div class="ratio-bar-fill ratio-blue" style="width: ${pL}%">${pL}%</div>`;
             }
@@ -1021,7 +1064,7 @@
                 if(idx > -1) db.kelurahan[idx] = data;
             }
 
-            syncData();
+            pushData(); // Push ke sheet
             closeModal('modal-kelurahan');
             renderKelurahan();
             showToast('Data Kelurahan Tersimpan');
@@ -1049,7 +1092,13 @@
             const tbody = document.getElementById('table-birthday');
             tbody.innerHTML = '';
             
-            const bdays = db.anggota.filter(a => new Date(a.tgl).getMonth() + 1 === filterBulan);
+            const bdays = db.anggota.filter(a => {
+                const dateParts = a.tgl ? a.tgl.split('-') : []; // YYYY-MM-DD
+                if(dateParts.length > 1) {
+                    return parseInt(dateParts[1]) === filterBulan;
+                }
+                return false;
+            });
             
             bdays.forEach(a => {
                 tbody.innerHTML += `
