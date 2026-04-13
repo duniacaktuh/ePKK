@@ -175,6 +175,59 @@
         localStorage.setItem('epkk_data', JSON.stringify(db));
     }
 
+    // --- MAPPING DATA SPREADSHEET (SOLUSI UNDEFINED & NAN) ---
+    // Fungsi ini akan mencocokkan data dari Spreadsheet walaupun Headernya kapital, ber spasi, dsb.
+    function mapData(rawArray, type) {
+        if (!rawArray || !Array.isArray(rawArray)) return [];
+        return rawArray.map(item => {
+            let lowerKeys = {};
+            // Ubah semua key jadi huruf kecil & buang spasi agar mudah dimapping
+            Object.keys(item).forEach(k => {
+                lowerKeys[k.toLowerCase().replace(/[^a-z0-9]/g, '')] = item[k];
+            });
+
+            if (type === 'anggota') {
+                let dateVal = lowerKeys.tgllahir || lowerKeys.tanggallahir || item.tglLahir || '';
+                // Pastikan format tanggal sesuai ISO untuk Date Picker HTML
+                if(dateVal && !isNaN(new Date(dateVal).getTime())) {
+                    dateVal = new Date(dateVal).toISOString().split('T')[0];
+                }
+                return {
+                    id: lowerKeys.id || item.id || '',
+                    nama: lowerKeys.nama || lowerKeys.namapengurus || item.nama || '',
+                    jabatan: lowerKeys.jabatan || item.jabatan || '',
+                    tglLahir: dateVal,
+                    alamat: lowerKeys.alamat || lowerKeys.alamatdomisili || item.alamat || '',
+                    status: lowerKeys.status || item.status || '',
+                    agama: lowerKeys.agama || item.agama || '',
+                    warta: lowerKeys.warta || item.warta || '',
+                    hp: lowerKeys.hp || lowerKeys.nohp || item.hp || ''
+                };
+            } else if (type === 'kecamatan') {
+                 return {
+                    id: lowerKeys.id || item.id || '',
+                    kecamatan: lowerKeys.kecamatan || lowerKeys.wilayah || item.kecamatan || '',
+                    namaPejabat: lowerKeys.namapejabat || item.namaPejabat || '',
+                    lp: lowerKeys.lp || lowerKeys.jeniskelamin || item.lp || '',
+                    ketuaPkkId: lowerKeys.ketuapkkid || lowerKeys.ketuapkk || item.ketuaPkkId || '',
+                    sekretaris: lowerKeys.sekretaris || item.sekretaris || '',
+                    hpSekretaris: lowerKeys.hpsekretaris || item.hpSekretaris || ''
+                 };
+            } else if (type === 'kelurahan') {
+                 return {
+                    id: lowerKeys.id || item.id || '',
+                    kelurahan: lowerKeys.kelurahan || lowerKeys.wilayah || item.kelurahan || '',
+                    namaPejabat: lowerKeys.namapejabat || item.namaPejabat || '',
+                    lp: lowerKeys.lp || lowerKeys.jeniskelamin || item.lp || '',
+                    ketuaPkkId: lowerKeys.ketuapkkid || lowerKeys.ketuapkk || item.ketuaPkkId || '',
+                    sekretaris: lowerKeys.sekretaris || item.sekretaris || '',
+                    hpSekretaris: lowerKeys.hpsekretaris || item.hpSekretaris || ''
+                 };
+            }
+            return item;
+        });
+    }
+
     // --- UTILITIES ---
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
@@ -203,8 +256,10 @@
     }
 
     function calculateAge(birthDateStr) {
+        if(!birthDateStr) return 0;
         const today = new Date();
         const birthDate = new Date(birthDateStr);
+        if (isNaN(birthDate.getTime())) return 0;
         let age = today.getFullYear() - birthDate.getFullYear();
         const m = today.getMonth() - birthDate.getMonth();
         if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
@@ -216,6 +271,7 @@
     function formatDateIndo(dateStr) {
         if(!dateStr) return "-";
         const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
         return `${d.getDate()} ${monthsIndo[d.getMonth()]} ${d.getFullYear()}`;
     }
 
@@ -225,14 +281,11 @@
         const getRand = (str, len) => Array.from({length: len}, () => str[Math.floor(Math.random() * str.length)]).join('');
         
         if(type === 'anggota') {
-            // Start with letter, 9 digit total -> 1 letter + 8 alphanumeric
             const alphanum = letters + numbers;
             return getRand(letters, 1) + getRand(alphanum, 8);
         } else if (type === 'kecamatan') {
-            // 4 letters, 3 numbers
             return getRand(letters, 4) + getRand(numbers, 3);
         } else if (type === 'kelurahan') {
-            // 3 letters, 4 numbers
             return getRand(letters, 3) + getRand(numbers, 4);
         }
     }
@@ -270,35 +323,41 @@
         icon.classList.add('animate-spin');
         
         try {
-            // Simulasi fetch dari GAS
-            const response = await fetch(webAppUrl + '?action=getData');
+            // Ditambahkan redirect: 'follow' untuk menghindari masalah request CORS/redirect dari App Script
+            const response = await fetch(webAppUrl + '?action=getData', {
+                method: 'GET',
+                redirect: 'follow' 
+            });
+            
             if(response.ok) {
                 const data = await response.json();
-                db = data;
+                
+                // Panggil mapData untuk mengatasi "undefined" jika format header di spreadsheet beda
+                db.anggota = mapData(data.anggota || [], 'anggota');
+                db.kecamatan = mapData(data.kecamatan || [], 'kecamatan');
+                db.kelurahan = mapData(data.kelurahan || [], 'kelurahan');
+                
                 saveLocalDb();
-                renderContent();
-                showNotification("Sinkronisasi berhasil!");
+                renderContent(); // Render ulang dengan data tersinkron
+                showNotification("Sinkronisasi otomatis berhasil!");
             } else {
-                throw new Error("Gagal mengambil data");
+                throw new Error("Gagal mengambil data dari Spreadsheet");
             }
         } catch (error) {
-            // Fallback for demo if URL is fake
-            setTimeout(() => {
-                showNotification("Simulasi Sinkronisasi Selesai (Demo Mode)", "success");
-                icon.classList.remove('animate-spin');
-            }, 1000);
-            return;
+            console.error("Kesalahan Sinkronisasi:", error);
+            showNotification("Gagal sinkronisasi. Pastikan URL valid dan Apps Script bisa diakses.", "error");
+        } finally {
+            icon.classList.remove('animate-spin');
         }
-        icon.classList.remove('animate-spin');
     }
 
     async function pushToSpreadsheet(action, table, data) {
-        if(!webAppUrl) return; // Silent return, local db already saved
+        if(!webAppUrl) return; 
         
         try {
             fetch(webAppUrl, {
                 method: 'POST',
-                mode: 'no-cors', // GAS often requires no-cors from frontend if not configured perfectly
+                mode: 'no-cors', 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: action, table: table, data: data })
             });
@@ -330,11 +389,14 @@
         
         // Agama Stats
         const agamaCount = {};
-        db.anggota.forEach(a => { agamaCount[a.agama] = (agamaCount[a.agama] || 0) + 1; });
+        db.anggota.forEach(a => { 
+            const agm = a.agama || "Lainnya";
+            agamaCount[agm] = (agamaCount[agm] || 0) + 1; 
+        });
         
         // Birthdays this month
         const currentMonth = new Date().getMonth();
-        const bdays = db.anggota.filter(a => new Date(a.tglLahir).getMonth() === currentMonth).slice(0,5);
+        const bdays = db.anggota.filter(a => a.tglLahir && new Date(a.tglLahir).getMonth() === currentMonth).slice(0,5);
 
         let html = `
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -382,8 +444,8 @@
                                 <div class="flex items-center">
                                     <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center mr-3 font-bold"><i class="fa-solid fa-cake-candles"></i></div>
                                     <div>
-                                        <p class="text-sm font-medium text-gray-800">${b.nama}</p>
-                                        <p class="text-xs text-gray-500">${b.jabatan} • ${new Date(b.tglLahir).getDate()} ${monthsIndo[new Date(b.tglLahir).getMonth()]}</p>
+                                        <p class="text-sm font-medium text-gray-800">${b.nama || '-'}</p>
+                                        <p class="text-xs text-gray-500">${b.jabatan || '-'} • ${new Date(b.tglLahir).getDate()} ${monthsIndo[new Date(b.tglLahir).getMonth()]}</p>
                                     </div>
                                 </div>
                                 <span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full">${calculateAge(b.tglLahir)} thn</span>
@@ -419,13 +481,13 @@
                         <tbody class="divide-y divide-gray-200">
                             ${db.anggota.map(a => `
                                 <tr class="hover:bg-gray-50">
-                                    <td class="p-3 font-mono text-xs">${a.id}</td>
-                                    <td class="p-3 font-medium text-gray-800">${a.nama}</td>
-                                    <td class="p-3 text-gray-600">${a.jabatan}</td>
+                                    <td class="p-3 font-mono text-xs">${a.id || '-'}</td>
+                                    <td class="p-3 font-medium text-gray-800">${a.nama || '-'}</td>
+                                    <td class="p-3 text-gray-600">${a.jabatan || '-'}</td>
                                     <td class="p-3 text-center">${calculateAge(a.tglLahir)}</td>
-                                    <td class="p-3"><span class="bg-gray-100 px-2 py-1 rounded text-xs">${a.status}</span></td>
-                                    <td class="p-3">${a.hp}</td>
-                                    <td class="p-3 text-center space-x-2">
+                                    <td class="p-3"><span class="bg-gray-100 px-2 py-1 rounded text-xs">${a.status || '-'}</span></td>
+                                    <td class="p-3">${a.hp || '-'}</td>
+                                    <td class="p-3 text-center space-x-2 whitespace-nowrap">
                                         <button onclick="viewDetail('anggota', '${a.id}')" class="text-blue-500 hover:text-blue-700" title="Detail"><i class="fa-solid fa-eye"></i></button>
                                         <button onclick="editData('anggota', '${a.id}')" class="text-yellow-500 hover:text-yellow-700" title="Edit"><i class="fa-solid fa-edit"></i></button>
                                     </td>
@@ -442,12 +504,11 @@
 
     function buildRatioBar(dataArray, label) {
         const total = dataArray.length;
-        const lCount = dataArray.filter(d => d.lp === 'L').length;
-        const pCount = dataArray.filter(d => d.lp === 'P').length;
+        const lCount = dataArray.filter(d => d.lp === 'L' || d.lp === 'l').length;
+        const pCount = dataArray.filter(d => d.lp === 'P' || d.lp === 'p').length;
         const lPct = total === 0 ? 0 : Math.round((lCount / total) * 100);
         const pPct = total === 0 ? 0 : 100 - lPct;
 
-        // Colors based on images
         const barColor = label === 'Kecamatan' ? 'bg-blue-500' : 'bg-pink-500';
 
         return `
@@ -490,12 +551,12 @@
                                 const ketua = db.anggota.find(a => a.id === k.ketuaPkkId);
                                 return `
                                 <tr class="hover:bg-gray-50">
-                                    <td class="p-3 font-medium text-gray-800">${k.kecamatan}</td>
-                                    <td class="p-3">${k.namaPejabat}</td>
-                                    <td class="p-3 text-center">${k.lp}</td>
+                                    <td class="p-3 font-medium text-gray-800">${k.kecamatan || '-'}</td>
+                                    <td class="p-3">${k.namaPejabat || '-'}</td>
+                                    <td class="p-3 text-center uppercase">${k.lp || '-'}</td>
                                     <td class="p-3">${ketua ? ketua.nama : '-'}</td>
-                                    <td class="p-3">${k.sekretaris}</td>
-                                    <td class="p-3 text-right space-x-2">
+                                    <td class="p-3">${k.sekretaris || '-'}</td>
+                                    <td class="p-3 text-right space-x-2 whitespace-nowrap">
                                         <button onclick="viewDetail('kecamatan', '${k.id}')" class="text-blue-500 hover:text-blue-700" title="Detail"><i class="fa-solid fa-eye"></i></button>
                                         <button onclick="editData('kecamatan', '${k.id}')" class="text-yellow-500 hover:text-yellow-700" title="Edit"><i class="fa-solid fa-edit"></i></button>
                                     </td>
@@ -535,12 +596,12 @@
                                 const ketua = db.anggota.find(a => a.id === k.ketuaPkkId);
                                 return `
                                 <tr class="hover:bg-gray-50">
-                                    <td class="p-3 font-medium text-gray-800">${k.kelurahan}</td>
-                                    <td class="p-3">${k.namaPejabat}</td>
-                                    <td class="p-3 text-center">${k.lp}</td>
+                                    <td class="p-3 font-medium text-gray-800">${k.kelurahan || '-'}</td>
+                                    <td class="p-3">${k.namaPejabat || '-'}</td>
+                                    <td class="p-3 text-center uppercase">${k.lp || '-'}</td>
                                     <td class="p-3">${ketua ? ketua.nama : '-'}</td>
-                                    <td class="p-3">${k.sekretaris}</td>
-                                    <td class="p-3 text-right space-x-2">
+                                    <td class="p-3">${k.sekretaris || '-'}</td>
+                                    <td class="p-3 text-right space-x-2 whitespace-nowrap">
                                         <button onclick="viewDetail('kelurahan', '${k.id}')" class="text-blue-500 hover:text-blue-700" title="Detail"><i class="fa-solid fa-eye"></i></button>
                                         <button onclick="editData('kelurahan', '${k.id}')" class="text-yellow-500 hover:text-yellow-700" title="Edit"><i class="fa-solid fa-edit"></i></button>
                                     </td>
@@ -559,7 +620,7 @@
         const currentMonth = new Date().getMonth();
         let selectedMonth = document.getElementById('bmonth') ? document.getElementById('bmonth').value : currentMonth.toString();
         
-        const filtered = db.anggota.filter(a => new Date(a.tglLahir).getMonth() == selectedMonth);
+        const filtered = db.anggota.filter(a => a.tglLahir && new Date(a.tglLahir).getMonth() == selectedMonth);
         
         let monthOptions = monthsIndo.map((m, i) => `<option value="${i}" ${i == selectedMonth ? 'selected' : ''}>${m}</option>`).join('');
 
@@ -596,12 +657,12 @@
                         <tbody>
                             ${filtered.map(a => `
                                 <tr class="border-b border-gray-200">
-                                    <td class="p-3 border border-gray-200 font-medium">${a.nama}</td>
-                                    <td class="p-3 border border-gray-200">${a.jabatan}</td>
+                                    <td class="p-3 border border-gray-200 font-medium">${a.nama || '-'}</td>
+                                    <td class="p-3 border border-gray-200">${a.jabatan || '-'}</td>
                                     <td class="p-3 border border-gray-200 text-center">${formatDateIndo(a.tglLahir)}</td>
                                     <td class="p-3 border border-gray-200 text-center font-bold">${calculateAge(a.tglLahir)}</td>
-                                    <td class="p-3 border border-gray-200">${a.alamat}</td>
-                                    <td class="p-3 border border-gray-200">${a.hp}</td>
+                                    <td class="p-3 border border-gray-200">${a.alamat || '-'}</td>
+                                    <td class="p-3 border border-gray-200">${a.hp || '-'}</td>
                                 </tr>
                             `).join('')}
                             ${filtered.length === 0 ? '<tr><td colspan="6" class="p-4 text-center text-gray-500 border border-gray-200">Tidak ada anggota yang berulang tahun di bulan ini.</td></tr>' : ''}
@@ -646,10 +707,10 @@
                     <tbody>
                         ${data.map(d => `
                             <tr>
-                                <td class="p-3 border border-gray-200">${d.nama}</td>
-                                <td class="p-3 border border-gray-200">${d.jabatan}</td>
+                                <td class="p-3 border border-gray-200">${d.nama || '-'}</td>
+                                <td class="p-3 border border-gray-200">${d.jabatan || '-'}</td>
                                 <td class="p-3 border border-gray-200 text-center">${calculateAge(d.tglLahir)}</td>
-                                <td class="p-3 border border-gray-200">${d.warta}</td>
+                                <td class="p-3 border border-gray-200">${d.warta || '-'}</td>
                             </tr>
                         `).join('')}
                         ${data.length === 0 ? '<tr><td colspan="4" class="p-4 text-center">Data kosong</td></tr>' : ''}
@@ -672,10 +733,10 @@
                             const ketua = db.anggota.find(a => a.id === d.ketuaPkkId);
                             return `
                             <tr>
-                                <td class="p-3 border border-gray-200">${d.kecamatan}</td>
-                                <td class="p-3 border border-gray-200">${d.namaPejabat}</td>
+                                <td class="p-3 border border-gray-200">${d.kecamatan || '-'}</td>
+                                <td class="p-3 border border-gray-200">${d.namaPejabat || '-'}</td>
                                 <td class="p-3 border border-gray-200">${ketua ? ketua.nama : '-'}</td>
-                                <td class="p-3 border border-gray-200">${d.sekretaris}</td>
+                                <td class="p-3 border border-gray-200">${d.sekretaris || '-'}</td>
                             </tr>
                         `}).join('')}
                     </tbody>
@@ -697,10 +758,10 @@
                             const ketua = db.anggota.find(a => a.id === d.ketuaPkkId);
                             return `
                             <tr>
-                                <td class="p-3 border border-gray-200">${d.kelurahan}</td>
-                                <td class="p-3 border border-gray-200">${d.namaPejabat}</td>
+                                <td class="p-3 border border-gray-200">${d.kelurahan || '-'}</td>
+                                <td class="p-3 border border-gray-200">${d.namaPejabat || '-'}</td>
                                 <td class="p-3 border border-gray-200">${ketua ? ketua.nama : '-'}</td>
-                                <td class="p-3 border border-gray-200">${d.sekretaris}</td>
+                                <td class="p-3 border border-gray-200">${d.sekretaris || '-'}</td>
                             </tr>
                         `}).join('')}
                     </tbody>
@@ -764,19 +825,19 @@
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500">Nama Pengurus <span class="text-red-500">*</span></label>
-                        <input type="text" id="f_nama" value="${data ? data.nama : ''}" class="w-full border rounded p-2 text-sm" required>
+                        <input type="text" id="f_nama" value="${data && data.nama ? data.nama : ''}" class="w-full border rounded p-2 text-sm" required>
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500">Jabatan</label>
-                        <input type="text" id="f_jabatan" value="${data ? data.jabatan : ''}" class="w-full border rounded p-2 text-sm">
+                        <input type="text" id="f_jabatan" value="${data && data.jabatan ? data.jabatan : ''}" class="w-full border rounded p-2 text-sm">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500">Tanggal Lahir <span class="text-red-500">*</span></label>
-                        <input type="date" id="f_tglLahir" value="${data ? data.tglLahir : ''}" class="w-full border rounded p-2 text-sm" required>
+                        <input type="date" id="f_tglLahir" value="${data && data.tglLahir ? data.tglLahir : ''}" class="w-full border rounded p-2 text-sm" required>
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-xs text-gray-500">Alamat Domisili</label>
-                        <input type="text" id="f_alamat" value="${data ? data.alamat : ''}" class="w-full border rounded p-2 text-sm">
+                        <input type="text" id="f_alamat" value="${data && data.alamat ? data.alamat : ''}" class="w-full border rounded p-2 text-sm">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500">Status</label>
@@ -800,11 +861,11 @@
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500">Warta</label>
-                        <input type="text" id="f_warta" value="${data ? data.warta : ''}" class="w-full border rounded p-2 text-sm">
+                        <input type="text" id="f_warta" value="${data && data.warta ? data.warta : ''}" class="w-full border rounded p-2 text-sm">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500">No. HP (Dimulai dgn +62)</label>
-                        <input type="text" id="f_hp" value="${data ? data.hp : '+62'}" oninput="if(!this.value.startsWith('+62')) this.value='+62';" class="w-full border rounded p-2 text-sm">
+                        <input type="text" id="f_hp" value="${data && data.hp ? data.hp : '+62'}" oninput="if(!this.value.startsWith('+62')) this.value='+62';" class="w-full border rounded p-2 text-sm">
                     </div>
                 </div>
             `;
@@ -823,11 +884,11 @@
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500">Nama ${labelWilayah} <span class="text-red-500">*</span></label>
-                        <input type="text" id="f_wilayah" value="${data ? data[type] : ''}" class="w-full border rounded p-2 text-sm" required>
+                        <input type="text" id="f_wilayah" value="${data ? (data.kecamatan || data.kelurahan) : ''}" class="w-full border rounded p-2 text-sm" required>
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500">Nama Pejabat</label>
-                        <input type="text" id="f_pejabat" value="${data ? data.namaPejabat : ''}" class="w-full border rounded p-2 text-sm">
+                        <input type="text" id="f_pejabat" value="${data && data.namaPejabat ? data.namaPejabat : ''}" class="w-full border rounded p-2 text-sm">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500">Jenis Kelamin Pejabat (L/P)</label>
@@ -852,11 +913,11 @@
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500">Nama Sekretaris</label>
-                        <input type="text" id="f_sekretaris" value="${data ? data.sekretaris : ''}" class="w-full border rounded p-2 text-sm">
+                        <input type="text" id="f_sekretaris" value="${data && data.sekretaris ? data.sekretaris : ''}" class="w-full border rounded p-2 text-sm">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500">HP Sekretaris</label>
-                        <input type="text" id="f_hpsekretaris" value="${data ? data.hpSekretaris : '+62'}" oninput="if(!this.value.startsWith('+62')) this.value='+62';" class="w-full border rounded p-2 text-sm">
+                        <input type="text" id="f_hpsekretaris" value="${data && data.hpSekretaris ? data.hpSekretaris : '+62'}" oninput="if(!this.value.startsWith('+62')) this.value='+62';" class="w-full border rounded p-2 text-sm">
                     </div>
                 </div>
             `;
@@ -935,17 +996,17 @@
             html = `
                 <div class="text-center mb-4">
                     <div class="w-20 h-20 bg-teal-100 rounded-full mx-auto flex items-center justify-center text-teal-600 text-3xl mb-2"><i class="fa-solid fa-user"></i></div>
-                    <h2 class="text-xl font-bold">${data.nama}</h2>
+                    <h2 class="text-xl font-bold">${data.nama || '-'}</h2>
                     <p class="text-gray-500">${data.id}</p>
                 </div>
                 <table class="w-full text-sm">
-                    <tr class="border-b"><td class="py-2 text-gray-500 w-1/3">Jabatan</td><td class="py-2 font-medium">${data.jabatan}</td></tr>
+                    <tr class="border-b"><td class="py-2 text-gray-500 w-1/3">Jabatan</td><td class="py-2 font-medium">${data.jabatan || '-'}</td></tr>
                     <tr class="border-b"><td class="py-2 text-gray-500">Tanggal Lahir</td><td class="py-2 font-medium">${formatDateIndo(data.tglLahir)} (${calculateAge(data.tglLahir)} thn)</td></tr>
-                    <tr class="border-b"><td class="py-2 text-gray-500">Agama</td><td class="py-2 font-medium">${data.agama}</td></tr>
-                    <tr class="border-b"><td class="py-2 text-gray-500">Status</td><td class="py-2 font-medium"><span class="bg-teal-100 text-teal-800 px-2 py-0.5 rounded text-xs">${data.status}</span></td></tr>
-                    <tr class="border-b"><td class="py-2 text-gray-500">Warta</td><td class="py-2 font-medium">${data.warta}</td></tr>
-                    <tr class="border-b"><td class="py-2 text-gray-500">No. HP</td><td class="py-2 font-medium">${data.hp}</td></tr>
-                    <tr><td class="py-2 text-gray-500 align-top">Alamat</td><td class="py-2 font-medium">${data.alamat}</td></tr>
+                    <tr class="border-b"><td class="py-2 text-gray-500">Agama</td><td class="py-2 font-medium">${data.agama || '-'}</td></tr>
+                    <tr class="border-b"><td class="py-2 text-gray-500">Status</td><td class="py-2 font-medium"><span class="bg-teal-100 text-teal-800 px-2 py-0.5 rounded text-xs">${data.status || '-'}</span></td></tr>
+                    <tr class="border-b"><td class="py-2 text-gray-500">Warta</td><td class="py-2 font-medium">${data.warta || '-'}</td></tr>
+                    <tr class="border-b"><td class="py-2 text-gray-500">No. HP</td><td class="py-2 font-medium">${data.hp || '-'}</td></tr>
+                    <tr><td class="py-2 text-gray-500 align-top">Alamat</td><td class="py-2 font-medium">${data.alamat || '-'}</td></tr>
                 </table>
             `;
         } else {
@@ -957,15 +1018,15 @@
             html = `
                 <div class="text-center mb-4">
                     <div class="w-16 h-16 bg-blue-100 rounded-full mx-auto flex items-center justify-center text-blue-600 text-2xl mb-2"><i class="fa-solid fa-building"></i></div>
-                    <h2 class="text-xl font-bold">${data[type]}</h2>
+                    <h2 class="text-xl font-bold">${data[type] || '-'}</h2>
                     <p class="text-gray-500">ID: ${data.id}</p>
                 </div>
                 <table class="w-full text-sm">
-                    <tr class="border-b"><td class="py-2 text-gray-500 w-2/5">Pejabat ${wLabel}</td><td class="py-2 font-medium">${data.namaPejabat} (${data.lp})</td></tr>
+                    <tr class="border-b"><td class="py-2 text-gray-500 w-2/5">Pejabat ${wLabel}</td><td class="py-2 font-medium">${data.namaPejabat || '-'} (${data.lp || '-'})</td></tr>
                     <tr class="border-b"><td class="py-2 text-gray-500">Ketua TP PKK</td><td class="py-2 font-medium text-teal-600">${namaKetua}</td></tr>
                     <tr class="border-b"><td class="py-2 text-gray-500">Warta</td><td class="py-2 font-medium">${warta}</td></tr>
-                    <tr class="border-b"><td class="py-2 text-gray-500">Sekretaris</td><td class="py-2 font-medium">${data.sekretaris}</td></tr>
-                    <tr><td class="py-2 text-gray-500">HP Sekretaris</td><td class="py-2 font-medium">${data.hpSekretaris}</td></tr>
+                    <tr class="border-b"><td class="py-2 text-gray-500">Sekretaris</td><td class="py-2 font-medium">${data.sekretaris || '-'}</td></tr>
+                    <tr><td class="py-2 text-gray-500">HP Sekretaris</td><td class="py-2 font-medium">${data.hpSekretaris || '-'}</td></tr>
                 </table>
             `;
         }
@@ -993,14 +1054,21 @@
         localStorage.setItem('epkk_url', webAppUrl);
         updateSyncStatus();
         closeSettings();
-        showNotification("URL Web App berhasil disimpan.");
-        if(webAppUrl) syncData(); // Auto sync if url is provided
+        
+        if(webAppUrl) {
+            showNotification("URL berhasil disimpan. Mensinkronisasikan data...");
+            syncData(); // Langsung otomatis tersinkron setelah klik simpan url
+        }
     }
 
     // INIT
     window.onload = () => {
         initMockData();
         renderContent();
+        // Langsung mengambil data jika link GS ada
+        if(webAppUrl) {
+            syncData();
+        }
     };
 
 </script>
