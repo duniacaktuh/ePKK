@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ePKK - Portal Manajemen Anggota</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        calm: {
+                            100: '#E0F2FE', 200: '#BAE6FD', 300: '#7DD3FC',
+                            400: '#38BDF8', 500: '#0EA5E9', 600: '#0284C7',
+                        }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; }
+        /* Hide spin button on number inputs */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; margin: 0; 
+        }
+        input[type=number] { -moz-appearance: textfield; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); }
+        .hide { display: none !important; }
+        .tab-active { background-color: #0EA5E9; color: white; border-color: #0EA5E9; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-slate-200 flex flex-col transition-all duration-300 z-20 hidden md:flex absolute md:relative h-full" id="sidebar">
+        <div class="h-16 flex items-center px-6 border-b border-slate-200">
+            <i class="ph-fill ph-flower-lotus text-calm-600 text-2xl mr-2"></i>
+            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-calm-600 to-blue-800">ePKK</h1>
+            <button class="ml-auto md:hidden text-slate-500 hover:text-slate-800" onclick="toggleSidebar()">
+                <i class="ph ph-x text-xl"></i>
+            </button>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            <a href="#" onclick="nav('dashboard')" class="nav-link flex items-center px-3 py-2.5 bg-calm-50 text-calm-600 rounded-xl font-medium" data-target="dashboard">
+                <i class="ph ph-squares-four text-xl mr-3"></i> Dashboard
+            </a>
+            <a href="#" onclick="nav('pengurus')" class="nav-link flex items-center px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium" data-target="pengurus">
+                <i class="ph ph-users text-xl mr-3"></i> Data Pengurus
+            </a>
+            
+            <div class="pt-4 pb-1 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Penggerak</div>
+            <a href="#" onclick="nav('kecamatan')" class="nav-link flex items-center px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium" data-target="kecamatan">
+                <i class="ph ph-buildings text-xl mr-3"></i> Kecamatan
+            </a>
+            <a href="#" onclick="nav('kelurahan')" class="nav-link flex items-center px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium" data-target="kelurahan">
+                <i class="ph ph-house-line text-xl mr-3"></i> Kelurahan
+            </a>
+
+            <div class="pt-4 pb-1 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Urita</div>
+            <a href="#" onclick="nav('birthday')" class="nav-link flex items-center px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium" data-target="birthday">
+                <i class="ph ph-cake text-xl mr-3"></i> Birthday
+            </a>
+            <a href="#" onclick="nav('rekap')" class="nav-link flex items-center px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium" data-target="rekap">
+                <i class="ph ph-chart-pie-slice text-xl mr-3"></i> Rekap Data
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full relative">
+        <!-- Topbar -->
+        <header class="h-16 glass border-b border-slate-200 flex items-center justify-between px-6 z-10">
+            <div class="flex items-center">
+                <button class="md:hidden mr-4 text-slate-500 hover:text-slate-800" onclick="toggleSidebar()">
+                    <i class="ph ph-list text-2xl"></i>
+                </button>
+                <h2 id="page-title" class="text-lg font-semibold text-slate-800">Dashboard</h2>
+            </div>
+            <div class="flex items-center space-x-2">
+                <!-- Clock -->
+                <div id="realtime-clock" class="hidden md:flex items-center text-xs font-bold text-slate-700 bg-white px-4 py-2 rounded-xl mr-2 border border-slate-200 shadow-sm tracking-wide">
+                    <!-- Updated by JS -->
+                </div>
+                <button onclick="syncData()" class="p-2 text-slate-400 hover:text-calm-600 hover:bg-calm-50 rounded-full transition group relative">
+                    <i class="ph ph-cloud-arrow-down text-xl"></i>
+                    <span class="absolute right-0 top-10 w-max bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition pointer-events-none">Tarik Data S-Sheet</span>
+                </button>
+                <button onclick="openModal('settingsModal')" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition group relative">
+                    <i class="ph ph-gear text-xl"></i>
+                    <span class="absolute right-0 top-10 w-max bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition pointer-events-none">URL Web GAS</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Container -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24" id="content-area">
+            
+            <!-- VIEW: DASHBOARD -->
+            <div id="view-dashboard" class="view-section space-y-4">
+                <!-- Big Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-rose-50 h-40 p-6 rounded-2xl border border-rose-100 shadow-sm hover:shadow-md transition group relative overflow-hidden flex flex-col justify-center">
+                        <div class="absolute -right-6 -top-6 w-32 h-32 bg-rose-200/40 rounded-full group-hover:scale-110 transition duration-500"></div>
+                        <div class="relative z-10 flex justify-between items-center w-full">
+                            <div>
+                                <p class="text-sm font-semibold text-rose-700 mb-1">Pengurus Kota</p>
+                                <h3 class="text-4xl font-bold text-rose-900" id="dash-kota">0</h3>
+                            </div>
+                            <div class="p-3.5 bg-white/60 text-rose-600 rounded-2xl backdrop-blur-sm shadow-sm"><i class="ph-fill ph-crown text-3xl"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-indigo-50 h-40 p-6 rounded-2xl border border-indigo-100 shadow-sm hover:shadow-md transition group relative overflow-hidden flex flex-col justify-center">
+                        <div class="absolute -right-6 -top-6 w-32 h-32 bg-indigo-200/40 rounded-full group-hover:scale-110 transition duration-500"></div>
+                        <div class="relative z-10 flex justify-between items-center w-full">
+                            <div>
+                                <p class="text-sm font-semibold text-indigo-700 mb-1">Staf</p>
+                                <h3 class="text-4xl font-bold text-indigo-900" id="dash-staf">0</h3>
+                            </div>
+                            <div class="p-3.5 bg-white/60 text-indigo-600 rounded-2xl backdrop-blur-sm shadow-sm"><i class="ph-fill ph-briefcase text-3xl"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-amber-50 h-40 p-6 rounded-2xl border border-amber-100 shadow-sm hover:shadow-md transition group relative overflow-hidden flex flex-col justify-center">
+                        <div class="absolute -right-6 -top-6 w-32 h-32 bg-amber-200/40 rounded-full group-hover:scale-110 transition duration-500"></div>
+                        <div class="relative z-10 flex justify-between items-center w-full">
+                            <div>
+                                <p class="text-sm font-semibold text-amber-700 mb-1">Kecamatan</p>
+                                <h3 class="text-4xl font-bold text-amber-900" id="dash-kec">0</h3>
+                            </div>
+                            <div class="p-3.5 bg-white/60 text-amber-600 rounded-2xl backdrop-blur-sm shadow-sm"><i class="ph-fill ph-buildings text-3xl"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-emerald-50 h-40 p-6 rounded-2xl border border-emerald-100 shadow-sm hover:shadow-md transition group relative overflow-hidden flex flex-col justify-center">
+                        <div class="absolute -right-6 -top-6 w-32 h-32 bg-emerald-200/40 rounded-full group-hover:scale-110 transition duration-500"></div>
+                        <div class="relative z-10 flex justify-between items-center w-full">
+                            <div>
+                                <p class="text-sm font-semibold text-emerald-700 mb-1">Kelurahan</p>
+                                <h3 class="text-4xl font-bold text-emerald-900" id="dash-kel">0</h3>
+                            </div>
+                            <div class="p-3.5 bg-white/60 text-emerald-600 rounded-2xl backdrop-blur-sm shadow-sm"><i class="ph-fill ph-house-line text-3xl"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <!-- Chart Agama -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                        <h3 class="font-semibold text-slate-800 mb-3 flex items-center"><i class="ph ph-hands-praying text-calm-500 mr-2"></i> Agama</h3>
+                        <div class="relative h-64 w-full flex justify-center mt-2">
+                            <canvas id="agamaChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Birthday Box -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm lg:col-span-2 relative overflow-hidden">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 id="dash-bday-title" class="font-semibold text-slate-800 flex items-center"><i class="ph ph-cake text-emerald-500 mr-2"></i> Ulang Tahun April</h3>
+                            <button onclick="nav('birthday')" class="text-sm text-calm-600 hover:underline">Lihat Semua</button>
+                        </div>
+                        <div class="space-y-3" id="dash-birthday-list">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 8 Mini Cards (Rotating) -->
+                <div>
+                    <h3 class="font-semibold text-slate-800 mb-3 flex items-center"><i class="ph ph-sparkle text-amber-500 mr-2"></i> Highlight </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="dash-minicards">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: PENGURUS -->
+            <div id="view-pengurus" class="view-section hide space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                    <div class="relative w-full sm:w-64">
+                        <i class="ph ph-magnifying-glass absolute left-3 top-3 text-slate-400"></i>
+                        <input type="text" id="search-pengurus" placeholder="Cari nama pengurus..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-calm-500 outline-none">
+                    </div>
+                    <button onclick="openForm('pengurus')" class="w-full sm:w-auto bg-calm-600 hover:bg-calm-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center transition">
+                        <i class="ph ph-plus mr-2"></i> Tambah Pengurus
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-100">
+                            <tr>
+                                <th class="px-4 py-4">Nama & Jabatan</th>
+                                <th class="px-4 py-4">Usia</th>
+                                <th class="px-4 py-4">Status & Warta</th>
+                                <th class="px-4 py-4">Kontak</th>
+                                <th class="px-4 py-4 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-pengurus" class="divide-y divide-slate-100">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VIEW: KECAMATAN -->
+            <div id="view-kecamatan" class="view-section hide space-y-4">
+                <div class="flex justify-end">
+                    <button onclick="openForm('kecamatan')" class="bg-calm-600 hover:bg-calm-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center transition">
+                        <i class="ph ph-plus mr-2"></i> Tambah Kecamatan
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="list-kecamatan">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- VIEW: KELURAHAN -->
+            <div id="view-kelurahan" class="view-section hide space-y-4">
+                <div class="flex justify-end">
+                    <button onclick="openForm('kelurahan')" class="bg-calm-600 hover:bg-calm-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center transition">
+                        <i class="ph ph-plus mr-2"></i> Tambah Kelurahan
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="list-kelurahan">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- VIEW: BIRTHDAY -->
+            <div id="view-birthday" class="view-section hide space-y-6">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 overflow-x-auto whitespace-nowrap scrollbar-hide flex gap-2" id="birthday-months">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="birthday-cards">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- VIEW: REKAP DATA -->
+            <div id="view-rekap" class="view-section hide space-y-6">
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- 6 Mini Cards -->
+                    <div onclick="showRekapTable('Pengurus Kota')" class="cursor-pointer bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-blue-400 hover:shadow-md transition text-center group">
+                        <div class="w-12 h-12 mx-auto bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-2 group-hover:bg-blue-600 group-hover:text-white transition"><i class="ph-fill ph-crown text-2xl"></i></div>
+                        <h4 class="font-semibold text-slate-800 text-sm">Pengurus Kota</h4>
+                    </div>
+                    <div onclick="showRekapTable('Staf')" class="cursor-pointer bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-indigo-400 hover:shadow-md transition text-center group">
+                        <div class="w-12 h-12 mx-auto bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-2 group-hover:bg-indigo-600 group-hover:text-white transition"><i class="ph-fill ph-briefcase text-2xl"></i></div>
+                        <h4 class="font-semibold text-slate-800 text-sm">Staf</h4>
+                    </div>
+                    <div onclick="showRekapTable('Pengurus Kecamatan')" class="cursor-pointer bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-amber-400 hover:shadow-md transition text-center group">
+                        <div class="w-12 h-12 mx-auto bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mb-2 group-hover:bg-amber-600 group-hover:text-white transition"><i class="ph-fill ph-users-three text-2xl"></i></div>
+                        <h4 class="font-semibold text-slate-800 text-sm">Pengurus Kecamatan</h4>
+                    </div>
+                    <div onclick="showRekapTable('Kecamatan')" class="cursor-pointer bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-emerald-400 hover:shadow-md transition text-center group">
+                        <div class="w-12 h-12 mx-auto bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-2 group-hover:bg-emerald-600 group-hover:text-white transition"><i class="ph-fill ph-buildings text-2xl"></i></div>
+                        <h4 class="font-semibold text-slate-800 text-sm">Data Kecamatan</h4>
+                    </div>
+                    <div onclick="showRekapTable('Pengurus Kelurahan')" class="cursor-pointer bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-green-400 hover:shadow-md transition text-center group">
+                        <div class="w-12 h-12 mx-auto bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-2 group-hover:bg-green-600 group-hover:text-white transition"><i class="ph-fill ph-users-four text-2xl"></i></div>
+                        <h4 class="font-semibold text-slate-800 text-sm">Pengurus Kelurahan</h4>
+                    </div>
+                    <div onclick="showRekapTable('Kelurahan')" class="cursor-pointer bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-rose-400 hover:shadow-md transition text-center group">
+                        <div class="w-12 h-12 mx-auto bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mb-2 group-hover:bg-rose-600 group-hover:text-white transition"><i class="ph-fill ph-house-line text-2xl"></i></div>
+                        <h4 class="font-semibold text-slate-800 text-sm">Data Kelurahan</h4>
+                    </div>
+                </div>
+
+                <!-- Container untuk tabel rekap -->
+                <div id="rekap-table-container" class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 hide relative">
+                    <button onclick="closeRekapTable()" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 bg-slate-100 hover:bg-red-50 rounded-full p-1 transition">
+                        <i class="ph ph-x"></i>
+                    </button>
+                    <h3 id="rekap-table-title" class="font-bold text-slate-800 mb-4 pr-8 text-lg"></h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead id="rekap-table-head" class="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-100"></thead>
+                            <tbody id="rekap-table-body" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- UI MODALS -->
+
+    <!-- Form Pengurus Modal -->
+    <div id="modal-form-pengurus" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hide px-4">
+        <div class="bg-white w-full max-w-xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800" id="title-form-pengurus">Tambah Pengurus</h3>
+                <button onclick="closeModal('modal-form-pengurus')" class="text-slate-400 hover:text-slate-700"><i class="ph ph-x text-lg"></i></button>
+            </div>
+            <div class="p-5 overflow-y-auto space-y-4">
+                <input type="hidden" id="p_id">
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Nama Pengurus</label><input type="text" id="p_nama" class="w-full border border-slate-200 p-2 rounded focus:border-calm-500 outline-none text-sm"></div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Jabatan</label><input type="text" id="p_jabatan" class="w-full border border-slate-200 p-2 rounded focus:border-calm-500 outline-none text-sm"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Tanggal Lahir</label><input type="date" id="p_tglLahir" class="w-full border border-slate-200 p-2 rounded focus:border-calm-500 outline-none text-sm"></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Agama</label>
+                        <select id="p_agama" class="w-full border border-slate-200 p-2 rounded focus:border-calm-500 outline-none text-sm">
+                            <option value="Islam">Islam</option><option value="Kristen">Kristen</option><option value="Katolik">Katolik</option>
+                            <option value="Hindu">Hindu</option><option value="Buddha">Buddha</option><option value="Konghucu">Konghucu</option>
+                        </select>
+                    </div>
+                </div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Alamat Domisili</label><textarea id="p_alamat" rows="2" class="w-full border border-slate-200 p-2 rounded focus:border-calm-500 outline-none text-sm"></textarea></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Status</label>
+                        <select id="p_status" class="w-full border border-slate-200 p-2 rounded focus:border-calm-500 outline-none text-sm">
+                            <option value="Kota">Kota</option><option value="Staf">Staf</option><option value="Kecamatan">Kecamatan</option><option value="Kelurahan">Kelurahan</option>
+                        </select>
+                    </div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Warta (Peran/Posisi)</label><input type="text" id="p_warta" class="w-full border border-slate-200 p-2 rounded focus:border-calm-500 outline-none text-sm" placeholder="Contoh: Istri Walikota"></div>
+                </div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Nomor HP</label>
+                    <div class="flex">
+                        <span class="inline-flex items-center px-3 text-sm text-slate-500 bg-slate-100 border border-r-0 border-slate-200 rounded-l">+62</span>
+                        <input type="number" id="p_hp" class="w-full border border-slate-200 p-2 rounded-r focus:border-calm-500 outline-none text-sm">
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                <button onclick="closeModal('modal-form-pengurus')" class="px-4 py-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition flex items-center"><i class="ph ph-x mr-1"></i> Batal</button>
+                <button onclick="saveData('pengurus')" class="px-4 py-2 text-sm text-white bg-calm-600 rounded-lg hover:bg-calm-700 transition flex items-center"><i class="ph ph-floppy-disk mr-1"></i> Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Area (Kec/Kel) Modal -->
+    <div id="modal-form-area" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hide px-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800" id="title-form-area">Tambah Area</h3>
+                <button onclick="closeModal('modal-form-area')" class="text-slate-400 hover:text-slate-700"><i class="ph ph-x text-lg"></i></button>
+            </div>
+            <div class="p-5 overflow-y-auto space-y-4">
+                <input type="hidden" id="a_type">
+                <input type="hidden" id="a_id">
+                <div><label class="block text-xs font-medium text-slate-500 mb-1" id="lbl-area-name">Nama Wilayah</label><input type="text" id="a_nama" class="w-full border border-slate-200 p-2 rounded focus:border-calm-500 outline-none text-sm"></div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Nama Pejabat</label><input type="text" id="a_pejabat" class="w-full border border-slate-200 p-2 rounded focus:border-calm-500 outline-none text-sm"></div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Jenis Kelamin (Pejabat)</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center text-sm"><input type="radio" name="a_jk" value="L" class="mr-1 accent-calm-600" checked> Laki-laki</label>
+                        <label class="flex items-center text-sm"><input type="radio" name="a_jk" value="P" class="mr-1 accent-calm-600"> Perempuan</label>
+                    </div>
+                </div>
+                <div class="relative">
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Ketua PKK</label>
+                    <input type="text" id="a_ketua" autocomplete="off" onkeyup="searchKetua()" class="w-full border border-slate-200 p-2 rounded focus:border-calm-500 outline-none text-sm" placeholder="Ketik nama pengurus...">
+                    <div id="autocomplete-list" class="absolute z-10 w-full bg-white border border-slate-200 rounded shadow-lg max-h-40 overflow-y-auto hide"></div>
+                </div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Warta (Auto)</label><input type="text" id="a_warta" readonly class="w-full bg-slate-50 border border-slate-200 p-2 rounded text-sm text-slate-500 cursor-not-allowed"></div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Sekretaris</label><input type="text" id="a_sekretaris" class="w-full border border-slate-200 p-2 rounded focus:border-calm-500 outline-none text-sm"></div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">No HP Sekretaris</label>
+                    <div class="flex">
+                        <span class="inline-flex items-center px-3 text-sm text-slate-500 bg-slate-100 border border-r-0 border-slate-200 rounded-l">+62</span>
+                        <input type="number" id="a_hp" class="w-full border border-slate-200 p-2 rounded-r focus:border-calm-500 outline-none text-sm">
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                <button onclick="closeModal('modal-form-area')" class="px-4 py-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition flex items-center"><i class="ph ph-x mr-1"></i> Batal</button>
+                <button onclick="saveData('area')" class="px-4 py-2 text-sm text-white bg-calm-600 rounded-lg hover:bg-calm-700 transition flex items-center"><i class="ph ph-floppy-disk mr-1"></i> Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Detail Modal Minimalis -->
+    <div id="modal-view-detail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hide px-4" onclick="if(event.target===this) closeModal('modal-view-detail')">
+        <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden transform transition-all p-6 relative">
+            <button onclick="closeModal('modal-view-detail')" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-slate-100 text-slate-500 hover:bg-slate-200 rounded-full transition"><i class="ph ph-x"></i></button>
+            <div id="view-detail-content" class="text-center pt-4">
+                <!-- Content injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal (GAS URL) -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hide px-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden">
+            <div class="p-5 border-b border-slate-100 flex items-center bg-slate-50">
+                <i class="ph ph-gear text-xl text-slate-500 mr-2"></i>
+                <h3 class="font-bold text-slate-800">Pengaturan Sinkronisasi GAS</h3>
+            </div>
+            <div class="p-5">
+                <p class="text-xs text-slate-500 mb-3">Masukkan URL Web App Google Apps Script untuk sinkronisasi data secara real-time.</p>
+                <input type="text" id="gas-url-input" class="w-full border border-slate-200 p-2 rounded focus:border-calm-500 outline-none text-sm font-mono" placeholder="https://script.google.com/macros/s/...">
+            </div>
+            <div class="p-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                <button onclick="closeModal('settingsModal')" class="px-4 py-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50">Tutup</button>
+                <button onclick="saveGasUrl()" class="px-4 py-2 text-sm text-white bg-slate-800 rounded-lg hover:bg-slate-900">Simpan URL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Toast Alert -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-white border-l-4 rounded shadow-lg p-4 flex items-center transition-all duration-300 transform translate-y-20 opacity-0 z-[100] max-w-xs">
+        <i id="toast-icon" class="text-2xl mr-3"></i>
+        <div>
+            <h4 id="toast-title" class="font-bold text-sm text-slate-800"></h4>
+            <p id="toast-msg" class="text-xs text-slate-500"></p>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // --- 1. STATE & MOCK DATA ---
+        let gasUrl = localStorage.getItem('ePkkGasUrl') || '';
+        let chartInstance = null;
+        const currentYear = 2026;
+
+        // Mengubah Warta dari Aktif/Cuti menjadi Jabatan Kader (Ketua PKK, Istri Walikota, dll)
+        let dbPengurus = [
+            { id: 'A232HJS71', nama: 'Ibu Ratna', jabatan: 'Ketua', tglLahir: '1975-04-15', alamat: 'Jl. Merdeka No 1', status: 'Kota', warta: 'Istri Walikota', agama: 'Islam', hp: '8123456789' },
+            { id: 'B9AYK55BN', nama: 'Bapak Budi', jabatan: 'Sekretaris', tglLahir: '1980-08-20', alamat: 'Jl. Sudirman 5', status: 'Staf', warta: 'Kader Pokja', agama: 'Kristen', hp: '8129876543' },
+            { id: 'C776LE22X', nama: 'Ibu Siti', jabatan: 'Bendahara', tglLahir: '1978-04-10', alamat: 'Kec. A', status: 'Kecamatan', warta: 'Istri Camat', agama: 'Islam', hp: '856123123' },
+            { id: 'D1113UYAW', nama: 'Ibu Dewi', jabatan: 'Anggota', tglLahir: '1990-12-05', alamat: 'Kel. B', status: 'Kelurahan', warta: 'Istri Lurah', agama: 'Hindu', hp: '877665544' },
+            { id: 'E332HBI0Y', nama: 'Bapak Anton', jabatan: 'Humas', tglLahir: '1985-04-02', alamat: 'Jl. Pahlawan', status: 'Kota', warta: 'Istri Kepala Dinas', agama: 'Katolik', hp: '899887766' },
+            { id: 'F556PQR8Z', nama: 'Ibu Lina', jabatan: 'Ketua Pokja', tglLahir: '1982-10-15', alamat: 'Jl. Mawar', status: 'Kecamatan', warta: 'Istri Sekcam', agama: 'Buddha', hp: '811223344' }
+        ];
+
+        let dbKecamatan = [
+            { id: 'QY332HBI0', nama: 'Kecamatan Gubeng', pejabat: 'Drs. Haryanto', jk: 'L', ketuaPkk: 'Ibu Siti', warta: 'Istri Camat', sekretaris: 'Nina', hp: '812334455' },
+            { id: 'T9AYK55BN', nama: 'Kecamatan Wonokromo', pejabat: 'Ir. Susanti', jk: 'P', ketuaPkk: 'Ibu Lina', warta: 'Istri Sekcam', sekretaris: 'Beni', hp: '812223344' }
+        ];
+
+        let dbKelurahan = [
+            { id: 'VJS71RK33', nama: 'Kelurahan Mojo', pejabat: 'Ahmad S.IP', jk: 'L', ketuaPkk: 'Ibu Dewi', warta: 'Istri Lurah', sekretaris: 'Rini', hp: '855443322' },
+            { id: 'ZI776LE22', nama: 'Kelurahan Darmo', pejabat: 'Sri Wahyuni', jk: 'P', ketuaPkk: 'Ibu Ratna', warta: 'Istri Walikota', sekretaris: 'Joko', hp: '888776655' }
+        ];
+
+        // --- CLOCK INIT ---
+        function updateClock() {
+            const now = new Date();
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+            
+            const dayName = days[now.getDay()];
+            const day = now.getDate();
+            const month = months[now.getMonth()];
+            const year = now.getFullYear();
+            
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            
+            const timeString = `${dayName}, ${day} ${month} ${year} • ${h}:${m}:${s}`;
+            const clockEl = document.getElementById('realtime-clock');
+            if (clockEl) clockEl.innerText = timeString;
+        }
+        setInterval(updateClock, 1000);
+
+        // --- 2. UTILITY FUNCTIONS ---
+        const getAge = (dobString) => {
+            if(!dobString) return 0;
+            const today = new Date('2026-04-30'); // Using prompt's current context
+            const birthDate = new Date(dobString);
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+            return age;
+        };
+
+        const formatDate = (dateString) => {
+            if(!dateString) return '-';
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
+        };
+
+        const formatBdayShort = (dateString) => {
+            if(!dateString) return { d: '-', m: '-' };
+            const d = new Date(dateString);
+            return {
+                d: d.getDate(),
+                m: d.toLocaleDateString('id-ID', { month: 'short' })
+            };
+        };
+
+        const showToast = (title, msg, type = 'success') => {
+            const t = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-msg').innerText = msg;
+            
+            t.className = `fixed bottom-5 right-5 bg-white border-l-4 rounded shadow-lg p-4 flex items-center transition-all duration-300 transform z-[100] max-w-xs border-${type === 'success'?'green':'red'}-500`;
+            icon.className = `text-2xl mr-3 ${type === 'success' ? 'ph-fill ph-check-circle text-green-500' : 'ph-fill ph-warning-circle text-red-500'}`;
+            
+            setTimeout(() => { t.classList.remove('translate-y-20', 'opacity-0'); }, 10);
+            setTimeout(() => { t.classList.add('translate-y-20', 'opacity-0'); }, 3000);
+        };
+
+        const getStatusStyles = (status) => {
+            const map = {
+                'Kota': 'bg-blue-100 text-blue-700 font-bold',
+                'Staf': 'bg-slate-100 text-slate-700 font-bold',
+                'Kecamatan': 'bg-amber-100 text-amber-700 font-bold',
+                'Kelurahan': 'bg-green-100 text-green-700 font-bold'
+            };
+            return `px-2.5 py-1 rounded-full text-[10px] uppercase ${map[status] || 'bg-slate-100 text-slate-700'}`;
+        };
+
+        const generateCustomId = (category) => {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let pool = '';
+            if(category === 'pengurus') pool = 'ABCDEFGHIJKLMNOP';
+            else if(category === 'kecamatan') pool = 'QRSTU';
+            else if(category === 'kelurahan') pool = 'VWXYZ';
+            
+            let id = pool.charAt(Math.floor(Math.random() * pool.length));
+            for(let i=0; i<8; i++) id += chars.charAt(Math.floor(Math.random() * chars.length));
+            return id;
+        };
+
+        // --- 3. NAVIGATION & UI TOGGLES ---
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            sb.classList.toggle('hidden');
+        }
+
+        function nav(page) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hide'));
+            document.getElementById(`view-${page}`).classList.remove('hide');
+            
+            document.querySelectorAll('.nav-link').forEach(el => {
+                el.classList.remove('bg-calm-50', 'text-calm-600');
+                el.classList.add('text-slate-600');
+            });
+            const activeLink = document.querySelector(`[data-target="${page}"]`);
+            if(activeLink) {
+                activeLink.classList.remove('text-slate-600');
+                activeLink.classList.add('bg-calm-50', 'text-calm-600');
+            }
+
+            const titles = {
+                'dashboard': 'Dashboard ePKK', 'pengurus': 'Data Pengurus', 
+                'kecamatan': 'Penggerak Kecamatan', 'kelurahan': 'Penggerak Kelurahan',
+                'birthday': 'Ulang Tahun Pengurus', 'rekap': 'Rekapitulasi Data'
+            };
+            document.getElementById('page-title').innerText = titles[page];
+            
+            // Re-render specific logic
+            if(page === 'dashboard') renderDashboard();
+            if(page === 'pengurus') renderPengurus();
+            if(page === 'kecamatan') renderArea('kecamatan');
+            if(page === 'kelurahan') renderArea('kelurahan');
+            if(page === 'birthday') renderBirthday(4); // April as default (4=April)
+            if(window.innerWidth < 768) toggleSidebar();
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hide'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hide'); }
+
+        // --- 4. RENDER DASHBOARD ---
+        function renderDashboard() {
+            // Totals
+            document.getElementById('dash-kota').innerText = dbPengurus.filter(p => p.status === 'Kota').length;
+            document.getElementById('dash-staf').innerText = dbPengurus.filter(p => p.status === 'Staf').length;
+            document.getElementById('dash-kec').innerText = dbPengurus.filter(p => p.status === 'Kecamatan').length;
+            document.getElementById('dash-kel').innerText = dbPengurus.filter(p => p.status === 'Kelurahan').length;
+
+            // Chart
+            const agamaCounts = dbPengurus.reduce((acc, p) => { acc[p.agama] = (acc[p.agama]||0)+1; return acc; }, {});
+            if(chartInstance) chartInstance.destroy();
+            const ctx = document.getElementById('agamaChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(agamaCounts),
+                    datasets: [{
+                        data: Object.values(agamaCounts),
+                        backgroundColor: ['#99f6e4', '#cdd1ce', '#fef08a', '#e9d5ff', '#bae6fd', '#fed7aa'],
+                        borderWidth: 2, borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '70%',
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Birthday (Bulan ini = April = bulan index 3 / 04)
+            const bdayList = document.getElementById('dash-birthday-list');
+            const thisMonthBdays = dbPengurus.filter(p => p.tglLahir && p.tglLahir.split('-')[1] === '04')
+                                             .sort((a,b) => new Date(a.tglLahir).getDate() - new Date(b.tglLahir).getDate())
+                                             .slice(0,5);
+            bdayList.innerHTML = thisMonthBdays.length ? thisMonthBdays.map(p => {
+                let d = formatBdayShort(p.tglLahir);
+                return `
+                <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition border border-transparent hover:border-slate-100">
+                    <div class="bg-emerald-50 text-emerald-500 w-12 h-12 rounded-xl flex flex-col items-center justify-center flex-shrink-0">
+                        <span class="text-xs font-semibold leading-none">${d.m}</span>
+                        <span class="text-lg font-bold leading-none">${d.d}</span>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-slate-800 text-sm">${p.nama}</h4>
+                        <p class="text-xs text-slate-500">${p.jabatan}</p>
+                    </div>
+                    <div class="flex-shrink-0 pl-2">
+                        <span class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-br from-amber-400 via-orange-500 to-red-600" style="filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.15));">${getAge(p.tglLahir)}</span>
+                    </div>
+                </div>`
+            }).join('') : '<p class="text-sm text-slate-400 italic">Tidak ada yang berulang tahun bulan ini.</p>';
+
+            // 8 Mini Cards Highlight
+            const mini = document.getElementById('dash-minicards');
+            let shuffled = [...dbPengurus].sort(() => 0.5 - Math.random()).slice(0, 8);
+            const iconMap = {'Kota':'ph-crown text-rose-500', 'Staf':'ph-briefcase text-indigo-500', 'Kecamatan':'ph-buildings text-amber-500', 'Kelurahan':'ph-house-line text-emerald-500'};
+            mini.innerHTML = shuffled.map(p => `
+                <div class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm hover:shadow-md transition">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center">
+                            <i class="ph-fill ${iconMap[p.status] || 'ph-user text-slate-500'} text-xl"></i>
+                        </div>
+                        <span class="text-[10px] uppercase font-bold ${p.status==='Kota'?'text-rose-600':p.status==='Staf'?'text-indigo-600':p.status==='Kecamatan'?'text-amber-600':'text-emerald-600'}">${p.status}</span>
+                    </div>
+                    <h4 class="font-bold text-slate-800 text-sm truncate">${p.nama}</h4>
+                    <p class="text-xs text-slate-500 mb-1 truncate">${p.jabatan}</p>
+                    <div class="flex justify-between items-center mt-2 pt-2 border-t border-slate-50">
+                        <span class="text-[10px] text-slate-400"><i class="ph ph-calendar-blank"></i> ${formatDate(p.tglLahir)}</span>
+                        <span class="text-[10px] font-semibold italic ${p.status==='Kota'?'text-rose-600':p.status==='Staf'?'text-indigo-600':p.status==='Kecamatan'?'text-amber-600':'text-emerald-600'}">${p.warta}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- 5. RENDER PENGURUS ---
+        function renderPengurus(filter = '') {
+            const tbody = document.getElementById('table-pengurus');
+            let data = dbPengurus;
+            if(filter) data = data.filter(p => p.nama.toLowerCase().includes(filter.toLowerCase()));
+            
+            tbody.innerHTML = data.map(p => `
+                <tr class="hover:bg-slate-50 transition group">
+                    <td class="px-4 py-4">
+                        <div class="font-medium text-slate-800">${p.nama}</div>
+                        <div class="text-xs text-slate-500">${p.jabatan}</div>
+                    </td>
+                    <td class="px-4 py-4 text-sm text-slate-600">${formatDate(p.tglLahir)} <br><span class="text-xs text-calm-600 font-medium">(${getAge(p.tglLahir)} th)</span></td>
+                    <td class="px-4 py-4">
+                        <div class="mb-1"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${p.status==='Kota'?'bg-blue-100 text-blue-700':p.status==='Staf'?'bg-slate-100 text-slate-700':p.status==='Kecamatan'?'bg-amber-100 text-amber-700':'bg-green-100 text-green-700'}">${p.status}</span></div>
+                        <div class="text-xs text-slate-500 italic">${p.warta}</div>
+                    </td>
+                    <td class="px-4 py-4">
+                        <div class="flex items-center text-xs text-slate-700 mb-1.5"><i class="ph ph-whatsapp-logo text-green-500 text-sm mr-1.5"></i> +62${p.hp}</div>
+                        <div class="flex items-center text-xs text-slate-500"><i class="ph-fill ph-map-pin text-slate-300 text-sm mr-1.5"></i> ${p.alamat}</div>
+                    </td>
+                    <td class="px-4 py-4 text-right">
+                        <button onclick="viewDetail('pengurus', '${p.id}')" class="text-slate-400 hover:text-calm-600 p-1"><i class="ph ph-eye text-lg"></i></button>
+                        <button onclick="editForm('pengurus', '${p.id}')" class="text-slate-400 hover:text-amber-500 p-1 ml-1"><i class="ph ph-pencil-simple text-lg"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        document.getElementById('search-pengurus').addEventListener('input', (e) => renderPengurus(e.target.value));
+
+        // --- 6. RENDER KECAMATAN & KELURAHAN ---
+        function renderArea(type) {
+            const container = document.getElementById(`list-${type}`);
+            const data = type === 'kecamatan' ? dbKecamatan : dbKelurahan;
+            
+            const jmlL = data.filter(d => d.jk === 'L').length;
+            const jmlP = data.filter(d => d.jk === 'P').length;
+            const total = jmlL + jmlP || 1;
+            const pctL = (jmlL/total)*100;
+            const pctP = (jmlP/total)*100;
+
+            let html = `
+                <div class="col-span-full bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-2">
+                    <h4 class="text-sm font-semibold text-slate-700 mb-2 flex items-center"><i class="ph ph-gender-intersex text-calm-500 mr-2"></i> Perbandingan Gender Pejabat</h4>
+                    <div class="flex h-3 rounded-full overflow-hidden bg-slate-100">
+                        <div class="bg-blue-500 transition-all duration-1000" style="width: ${pctL}%"></div>
+                        <div class="bg-pink-500 transition-all duration-1000" style="width: ${pctP}%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs mt-2 font-medium">
+                        <span class="text-blue-600"><i class="ph-bold ph-gender-male"></i> Laki-laki: ${jmlL}</span>
+                        <span class="text-pink-600">Perempuan: ${jmlP} <i class="ph-bold ph-gender-female"></i></span>
+                    </div>
+                </div>
+            `;
+
+            html += data.map(d => `
+                <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition relative">
+                    <div class="absolute top-4 right-4 flex space-x-2">
+                        <button onclick="viewDetail('area', '${d.id}', '${type}')" class="text-slate-400 hover:text-calm-600"><i class="ph ph-eye text-lg"></i></button>
+                        <button onclick="editForm('area', '${d.id}', '${type}')" class="text-slate-400 hover:text-amber-500"><i class="ph ph-pencil-simple text-lg"></i></button>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-lg mb-1">${d.nama}</h3>
+                    <p class="text-sm text-slate-500 mb-4 flex items-center"><i class="ph ph-user-circle mr-1"></i> ${d.pejabat} <span class="ml-2 text-xs px-1.5 py-0.5 rounded bg-slate-100">${d.jk==='L'?'Laki-laki':'Perempuan'}</span></p>
+                    
+                    <div class="bg-slate-50 p-3 rounded-lg grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                            <span class="block text-xs text-slate-400">Ketua PKK</span>
+                            <span class="font-medium text-slate-700">${d.ketuaPkk}</span>
+                            <span class="block text-[10px] text-slate-500 italic">${d.warta}</span>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-slate-400">Sekretaris</span>
+                            <span class="font-medium text-slate-700">${d.sekretaris}</span>
+                            <span class="flex items-center text-[10px] text-slate-500 mt-0.5"><i class="ph ph-whatsapp-logo text-green-500 text-sm mr-1"></i> +62 ${d.hp}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            container.innerHTML = html;
+        }
+
+        // --- 7. RENDER BIRTHDAY ---
+        function renderBirthday(activeMonth) {
+            const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+            const monthContainer = document.getElementById('birthday-months');
+            
+            monthContainer.innerHTML = months.map((m, i) => `
+                <button onclick="renderBirthday(${i+1})" class="px-4 py-1.5 rounded-full text-sm font-medium border transition ${activeMonth === i+1 ? 'tab-active' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}">
+                    ${m}
+                </button>
+            `).join('');
+
+            const cards = document.getElementById('birthday-cards');
+            const strMonth = activeMonth.toString().padStart(2, '0');
+            const data = dbPengurus.filter(p => p.tglLahir && p.tglLahir.split('-')[1] === strMonth)
+                                   .sort((a,b) => new Date(a.tglLahir).getDate() - new Date(b.tglLahir).getDate());
+
+            if(data.length === 0) {
+                cards.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 italic">Tidak ada pengurus yang berulang tahun di bulan ini.</div>`;
+                return;
+            }
+
+            cards.innerHTML = data.map(p => {
+                let d = formatBdayShort(p.tglLahir);
+                return `
+                <div class="bg-white p-4 rounded-xl border border-slate-100 flex items-center gap-4 hover:shadow-sm transition">
+                    <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex flex-col justify-center items-center flex-shrink-0">
+                        <span class="text-[10px] font-bold uppercase tracking-wider">${d.m}</span>
+                        <span class="text-xl font-black leading-none">${d.d}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-slate-800 text-sm truncate">${p.nama}</h4>
+                        <p class="text-xs text-slate-500 truncate mb-2">${p.jabatan}</p>
+                        <div class="flex flex-col gap-1.5 text-xs text-slate-500">
+                            <span class="flex items-center"><i class="ph ph-whatsapp-logo text-green-500 text-sm mr-1.5"></i>+62${p.hp}</span>
+                            <span class="flex items-start"><i class="ph-fill ph-map-pin mt-0.5 mr-1.5 text-slate-300 text-sm"></i><span class="leading-tight">${p.alamat}</span></span>
+                        </div>
+                    </div>
+                    <div class="flex-shrink-0 flex items-center justify-center pl-3">
+                        <span class="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-br from-amber-400 via-orange-500 to-red-600" style="filter: drop-shadow(2px 3px 1px rgba(0,0,0,0.15));">${getAge(p.tglLahir)}</span>
+                    </div>
+                </div>`
+            }).join('');
+        }
+
+        // --- 8. REKAP DATA ---
+        function showRekapTable(type) {
+            const container = document.getElementById('rekap-table-container');
+            const title = document.getElementById('rekap-table-title');
+            const thead = document.getElementById('rekap-table-head');
+            const tbody = document.getElementById('rekap-table-body');
+            
+            container.classList.remove('hide');
+            title.innerText = `Data ${type}`;
+
+            let data = [];
+            if(type.includes('Pengurus') || type === 'Staf') {
+                const statusMap = {'Pengurus Kota':'Kota', 'Staf':'Staf', 'Pengurus Kecamatan':'Kecamatan', 'Pengurus Kelurahan':'Kelurahan'};
+                data = dbPengurus.filter(p => p.status === statusMap[type]);
+                thead.innerHTML = `<tr><th class="px-4 py-3">Nama</th><th class="px-4 py-3">Jabatan</th><th class="px-4 py-3">TTL/Usia</th><th class="px-4 py-3">Alamat</th><th class="px-4 py-3">No. HP</th></tr>`;
+                tbody.innerHTML = data.length ? data.map(p => `
+                    <tr class="hover:bg-slate-50"><td class="px-4 py-3 font-medium text-slate-800">${p.nama}</td><td class="px-4 py-3">${p.jabatan}</td><td class="px-4 py-3">${formatDate(p.tglLahir)} (${getAge(p.tglLahir)} th)</td><td class="px-4 py-3">${p.alamat}</td><td class="px-4 py-3">+62 ${p.hp}</td></tr>
+                `).join('') : `<tr><td colspan="5" class="px-4 py-4 text-center text-slate-400 italic">Data Kosong</td></tr>`;
+            } else {
+                data = type === 'Kecamatan' ? dbKecamatan : dbKelurahan;
+                thead.innerHTML = `<tr><th class="px-4 py-3">Wilayah</th><th class="px-4 py-3">Nama Pejabat</th><th class="px-4 py-3">Ketua PKK</th><th class="px-4 py-3">Sekretaris</th></tr>`;
+                tbody.innerHTML = data.length ? data.map(d => `
+                    <tr class="hover:bg-slate-50"><td class="px-4 py-3 font-medium text-slate-800">${d.nama}</td><td class="px-4 py-3">${d.pejabat} (${d.jk})</td><td class="px-4 py-3">${d.ketuaPkk}</td><td class="px-4 py-3">${d.sekretaris}</td></tr>
+                `).join('') : `<tr><td colspan="4" class="px-4 py-4 text-center text-slate-400 italic">Data Kosong</td></tr>`;
+            }
+            // Scroll to table smoothly
+            container.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+        function closeRekapTable() { document.getElementById('rekap-table-container').classList.add('hide'); }
+
+        // --- 9. FORMS & CRUD LOGIC ---
+        function openForm(type) {
+            if(type === 'pengurus') {
+                document.getElementById('title-form-pengurus').innerText = 'Tambah Pengurus';
+                document.getElementById('p_id').value = '';
+                ['nama','jabatan','tglLahir','alamat','warta','hp'].forEach(id => document.getElementById(`p_${id}`).value = '');
+                openModal('modal-form-pengurus');
+            } else {
+                document.getElementById('title-form-area').innerText = `Tambah ${type === 'kecamatan'?'Kecamatan':'Kelurahan'}`;
+                document.getElementById('lbl-area-name').innerText = `Nama ${type === 'kecamatan'?'Kecamatan':'Kelurahan'}`;
+                document.getElementById('a_type').value = type;
+                document.getElementById('a_id').value = '';
+                ['nama','pejabat','ketua','warta','sekretaris','hp'].forEach(id => document.getElementById(`a_${id}`).value = '');
+                openModal('modal-form-area');
+            }
+        }
+
+        function editForm(type, id, subType = '') {
+            if(type === 'pengurus') {
+                const p = dbPengurus.find(x => x.id === id);
+                if(!p) return;
+                document.getElementById('title-form-pengurus').innerText = 'Edit Pengurus';
+                document.getElementById('p_id').value = p.id;
+                document.getElementById('p_nama').value = p.nama;
+                document.getElementById('p_jabatan').value = p.jabatan;
+                document.getElementById('p_tglLahir').value = p.tglLahir;
+                document.getElementById('p_agama').value = p.agama;
+                document.getElementById('p_alamat').value = p.alamat;
+                document.getElementById('p_status').value = p.status;
+                document.getElementById('p_warta').value = p.warta;
+                document.getElementById('p_hp').value = p.hp;
+                openModal('modal-form-pengurus');
+            } else {
+                const db = subType === 'kecamatan' ? dbKecamatan : dbKelurahan;
+                const d = db.find(x => x.id === id);
+                if(!d) return;
+                document.getElementById('title-form-area').innerText = `Edit ${subType}`;
+                document.getElementById('a_type').value = subType;
+                document.getElementById('a_id').value = d.id;
+                document.getElementById('a_nama').value = d.nama;
+                document.getElementById('a_pejabat').value = d.pejabat;
+                document.querySelector(`input[name="a_jk"][value="${d.jk}"]`).checked = true;
+                document.getElementById('a_ketua').value = d.ketuaPkk;
+                document.getElementById('a_warta').value = d.warta;
+                document.getElementById('a_sekretaris').value = d.sekretaris;
+                document.getElementById('a_hp').value = d.hp;
+                openModal('modal-form-area');
+            }
+        }
+
+        function saveData(type) {
+            // Animasi button
+            if(type === 'pengurus') {
+                const id = document.getElementById('p_id').value;
+                const data = {
+                    id: id || generateCustomId('pengurus'),
+                    nama: document.getElementById('p_nama').value,
+                    jabatan: document.getElementById('p_jabatan').value,
+                    tglLahir: document.getElementById('p_tglLahir').value,
+                    agama: document.getElementById('p_agama').value,
+                    alamat: document.getElementById('p_alamat').value,
+                    status: document.getElementById('p_status').value,
+                    warta: document.getElementById('p_warta').value,
+                    hp: document.getElementById('p_hp').value
+                };
+                if(id) {
+                    const idx = dbPengurus.findIndex(x => x.id === id);
+                    dbPengurus[idx] = data;
+                } else dbPengurus.push(data);
+                
+                closeModal('modal-form-pengurus');
+                renderPengurus();
+                syncToGas('Pengurus', data);
+            } else {
+                const subType = document.getElementById('a_type').value;
+                const id = document.getElementById('a_id').value;
+                const data = {
+                    id: id || generateCustomId(subType),
+                    nama: document.getElementById('a_nama').value,
+                    pejabat: document.getElementById('a_pejabat').value,
+                    jk: document.querySelector('input[name="a_jk"]:checked').value,
+                    ketuaPkk: document.getElementById('a_ketua').value,
+                    warta: document.getElementById('a_warta').value,
+                    sekretaris: document.getElementById('a_sekretaris').value,
+                    hp: document.getElementById('a_hp').value
+                };
+                const db = subType === 'kecamatan' ? dbKecamatan : dbKelurahan;
+                if(id) {
+                    const idx = db.findIndex(x => x.id === id);
+                    db[idx] = data;
+                } else db.push(data);
+
+                closeModal('modal-form-area');
+                renderArea(subType);
+                syncToGas(subType === 'kecamatan' ? 'Kecamatan' : 'Kelurahan', data);
+            }
+        }
+
+        // --- 10. AUTOCOMPLETE KETUA PKK ---
+        function searchKetua() {
+            const input = document.getElementById('a_ketua');
+            const list = document.getElementById('autocomplete-list');
+            const val = input.value.toLowerCase();
+            
+            if(!val) { list.classList.add('hide'); document.getElementById('a_warta').value = ''; return; }
+            
+            const matches = dbPengurus.filter(p => p.nama.toLowerCase().includes(val));
+            if(matches.length > 0) {
+                list.innerHTML = matches.map(p => `<div class="p-2 text-sm hover:bg-slate-50 cursor-pointer border-b border-slate-50" onclick="selectKetua('${p.nama}', '${p.warta}')">${p.nama} <span class="text-[10px] text-slate-400">(${p.jabatan})</span></div>`).join('');
+                list.classList.remove('hide');
+            } else {
+                list.innerHTML = `<div class="p-2 text-xs text-slate-400 italic">Tidak ditemukan</div>`;
+                list.classList.remove('hide');
+                document.getElementById('a_warta').value = '';
+            }
+        }
+        function selectKetua(nama, warta) {
+            document.getElementById('a_ketua').value = nama;
+            document.getElementById('a_warta').value = warta;
+            document.getElementById('autocomplete-list').classList.add('hide');
+        }
+        // Hide autocomplete when clicking outside
+        document.addEventListener('click', (e) => {
+            if(e.target.id !== 'a_ketua') document.getElementById('autocomplete-list')?.classList.add('hide');
+        });
+
+        // --- 11. VIEW DETAILS (MODAL MINIMALIS) ---
+        function viewDetail(type, id, subType = '') {
+            const content = document.getElementById('view-detail-content');
+            let html = '';
+            
+            if(type === 'pengurus') {
+                const p = dbPengurus.find(x => x.id === id);
+                html = `
+                    <div class="w-20 h-20 bg-calm-100 text-calm-600 rounded-full mx-auto flex items-center justify-center text-4xl mb-4 shadow-inner"><i class="ph-fill ph-user"></i></div>
+                    <h2 class="text-xl font-bold text-slate-800">${p.nama}</h2>
+                    <p class="text-sm text-calm-600 font-medium mb-4">${p.jabatan}</p>
+                    <div class="bg-slate-50 rounded-xl p-4 text-left space-y-2 text-sm">
+                        <div class="flex justify-between border-b border-slate-200 pb-2"><span class="text-slate-500">Usia</span><span class="font-medium text-slate-800">${getAge(p.tglLahir)} Tahun</span></div>
+                        <div class="flex justify-between border-b border-slate-200 pb-2"><span class="text-slate-500">Tanggal Lahir</span><span class="font-medium text-slate-800">${formatDate(p.tglLahir)}</span></div>
+                        <div class="flex justify-between border-b border-slate-200 pb-2"><span class="text-slate-500">Agama</span><span class="font-medium text-slate-800">${p.agama}</span></div>
+                        <div class="flex justify-between border-b border-slate-200 pb-2"><span class="text-slate-500">Status</span><span class="${getStatusStyles(p.status)}">${p.status}</span></div>
+                        <div class="flex justify-between border-b border-slate-200 pb-2"><span class="text-slate-500">Warta</span><span class="font-medium text-slate-800">${p.warta}</span></div>
+                        <div class="flex justify-between border-b border-slate-200 pb-2"><span class="text-slate-500">HP</span><span class="font-medium text-slate-800">+62 ${p.hp}</span></div>
+                        <div class="flex justify-between"><span class="text-slate-500 w-1/3">Domisili</span><span class="font-medium text-slate-800 text-right w-2/3 leading-tight">${p.alamat}</span></div>
+                    </div>
+                `;
+            } else {
+                const db = subType === 'kecamatan' ? dbKecamatan : dbKelurahan;
+                const d = db.find(x => x.id === id);
+                html = `
+                    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl mx-auto flex items-center justify-center text-3xl mb-4 rotate-3"><i class="ph-fill ${subType==='kecamatan'?'ph-buildings':'ph-house-line'}"></i></div>
+                    <h2 class="text-xl font-bold text-slate-800">${d.nama}</h2>
+                    <p class="text-xs text-slate-500 uppercase tracking-widest mb-4">Data ${subType}</p>
+                    <div class="bg-slate-50 rounded-xl p-4 text-left space-y-3 text-sm">
+                        <div><span class="block text-xs text-slate-400">Pejabat</span><span class="font-medium text-slate-800">${d.pejabat} (${d.jk})</span></div>
+                        <div class="bg-white p-2 rounded border border-slate-100"><span class="block text-xs text-calm-500">Ketua PKK</span><span class="font-bold text-slate-800">${d.ketuaPkk}</span> <span class="text-[10px] text-slate-500 italic ml-2">${d.warta}</span></div>
+                        <div><span class="block text-xs text-slate-400">Sekretaris</span><span class="font-medium text-slate-800">${d.sekretaris}</span></div>
+                        <div><span class="block text-xs text-slate-400">HP Sekretaris</span><span class="font-medium text-slate-800">+62 ${d.hp}</span></div>
+                    </div>
+                `;
+            }
+            content.innerHTML = html;
+            openModal('modal-view-detail');
+        }
+
+        // --- 12. GAS INTEGRATION (SIMULATED/REAL) ---
+        function saveGasUrl() {
+            const url = document.getElementById('gas-url-input').value;
+            if(url) {
+                localStorage.setItem('ePkkGasUrl', url);
+                gasUrl = url;
+                showToast('Berhasil', 'URL Google Apps Script telah disimpan.');
+                closeModal('settingsModal');
+                syncData(); // otomatis narik setelah diset
+            } else {
+                showToast('Error', 'URL tidak boleh kosong', 'error');
+            }
+        }
+
+        async function syncData() {
+            if(!gasUrl) {
+                showToast('Info', 'Menggunakan Data Lokal. Set URL GAS di menu gerigi untuk terhubung ke Spreadsheet.');
+                // Re-render to ensure UI is fresh
+                nav(document.querySelector('.nav-link.text-calm-600').dataset.target);
+                return;
+            }
+
+            try {
+                showToast('Sinkronisasi', 'Menarik data dari Spreadsheet...');
+                // Gunakan mode no-cors jika fetch gagal karena CORS, atau pastikan GAS WebApp diset "Anyone"
+                const response = await fetch(gasUrl + "?action=getData"); 
+                const result = await response.json();
+                
+                if(result.status === 'success') {
+                    if(result.data.pengurus) dbPengurus = result.data.pengurus;
+                    if(result.data.kecamatan) dbKecamatan = result.data.kecamatan;
+                    if(result.data.kelurahan) dbKelurahan = result.data.kelurahan;
+                    
+                    showToast('Sukses', 'Data berhasil ditarik dari Spreadsheet.');
+                    // Refresh current view
+                    const activeView = document.querySelector('.nav-link.text-calm-600').dataset.target;
+                    nav(activeView);
+                } else {
+                    throw new Error("Format respon salah");
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('Gagal Sinkron', 'Gagal menarik data. Periksa URL GAS atau CORS policy.', 'error');
+            }
+        }
+
+        async function syncToGas(sheetName, dataObj) {
+            if(!gasUrl) {
+                showToast('Tersimpan Lokal', 'Data disimpan di memori. Set URL GAS untuk simpan ke Spreadsheet.');
+                return;
+            }
+
+            try {
+                // Post data ke GAS
+                const payload = { sheet: sheetName, data: dataObj };
+                fetch(gasUrl, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                }).then(() => {
+                    showToast('Sukses', `Data otomatis tersinkron ke Spreadsheet.`);
+                }).catch(e => {
+                    showToast('Warning', 'Data tersimpan lokal, tapi gagal kirim ke Spreadsheet.', 'error');
+                });
+            } catch(error) {
+                console.error(error);
+            }
+        }
+
+        // --- INIT ---
+        window.onload = () => {
+            if(gasUrl) document.getElementById('gas-url-input').value = gasUrl;
+            nav('dashboard');
+            updateClock();
+        };
+
+    </script>
+</body>
+</html>
