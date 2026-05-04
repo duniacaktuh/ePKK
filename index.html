@@ -160,15 +160,17 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <!-- Chart Agama -->
-                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col h-full">
                         <h3 class="font-semibold text-slate-800 mb-3 flex items-center"><i class="ph ph-hands-praying text-calm-500 mr-2"></i> Agama</h3>
-                        <div class="relative h-64 w-full flex justify-center mt-2">
+                        <!-- Mengubah h-64 menjadi flex-1 min-h-[16rem] agar otomatis mengikuti tinggi element di sebelahnya -->
+                        <div class="relative flex-1 w-full min-h-[16rem] flex justify-center mt-2">
                             <canvas id="agamaChart"></canvas>
                         </div>
                     </div>
 
                     <!-- Birthday Box -->
-                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm lg:col-span-2 relative overflow-hidden">
+                    <!-- Menambahkan flex flex-col h-full agar tinggi gridnya rapi dan merata dengan Chart -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm lg:col-span-2 relative overflow-hidden flex flex-col h-full">
                         <div class="flex justify-between items-center mb-3">
                             <h3 id="dash-bday-title" class="font-semibold text-slate-800 flex items-center"><i class="ph ph-cake text-emerald-500 mr-2"></i> Ulang Tahun April</h3>
                             <button onclick="nav('birthday')" class="text-sm text-calm-600 hover:underline">Lihat Semua</button>
@@ -622,7 +624,7 @@
 
             // 8 Mini Cards Highlight
             const mini = document.getElementById('dash-minicards');
-            let shuffled = [...dbPengurus].sort(() => 0.5 - Math.random()).slice(0, 8);
+            let shuffled = [...dbPengurus].sort(() => 0.5 - Math.random()).slice(0, 12);
             const iconMap = {'Kota':'ph-crown text-rose-500', 'Staf':'ph-briefcase text-indigo-500', 'Kecamatan':'ph-buildings text-amber-500', 'Kelurahan':'ph-house-line text-emerald-500'};
             mini.innerHTML = shuffled.map(p => `
                 <div class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm hover:shadow-md transition">
